@@ -1,0 +1,78 @@
+{% extends 'users/profile_update.html' %}
+{% block page_title %}목표 기반 맞춤 식단 · Health Overview{% endblock %}
+{% block extra_styles %}
+    .meal-plan-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
+    .meal-plan-grid .card { overflow-wrap: anywhere; }
+    .meal-plan-grid h3 { color: #546e7a; margin-top: 0; }
+    .plan-section { margin-top: 20px; }
+    .plan-summary { line-height: 1.8; }
+    .plan-nutrients { font-size: 14px; line-height: 1.9; color: #617984; }
+    #meal-plan-form .field:first-child { grid-column: auto; }
+    [data-ai-submit]:disabled { opacity: .6; cursor: default; }
+    @media (max-width: 1100px) { .meal-plan-grid { grid-template-columns: 1fr; } }
+{% endblock %}
+{% block main_content %}
+<header class="header-wrapper">
+    <div class="header"><h1>목표 기반 맞춤 식단</h1><p>{{ plan_date|date:'Y년 m월 d일' }} · 실제 목표와 최근 기록을 참고한 하루 식단 예시입니다.</p></div>
+    <div class="form-actions"><a href="{% url 'meal_plan_history' %}" class="button">📚 식단 보관함</a><a href="{% url 'home' %}" class="button back-link">← 홈으로</a></div>
+</header>
+<section class="card" aria-labelledby="plan-settings-heading">
+    <div class="section-heading"><div class="icon-box" aria-hidden="true">🥗</div><div><h2 id="plan-settings-heading">나에게 맞는 식단 조건</h2><p>현재·목표 체중, 운동 습관, 최근 7일 식사·운동, 최근 체중 측정 기록을 참고합니다.</p></div></div>
+    {% if profile_ready %}
+    <p class="plan-summary">현재 <strong>{{ profile.current_weight }} kg</strong> → 목표 <strong>{{ profile.target_weight }} kg</strong> · <strong>{{ goal }} 방향</strong></p>
+    {% else %}
+    <p class="form-note">현재 체중과 목표 체중을 먼저 설정해 주세요. <a href="{% url 'profile_update' %}">프로필 설정 →</a></p>
+    {% endif %}
+    {% if plan_error %}<p class="errorlist" role="alert">{{ plan_error }}</p>{% endif %}
+    {% if plan_stale %}<p class="form-note" role="status">날짜·프로필·최근 기록이 변경되어 이전 제안을 표시하지 않습니다. 현재 정보로 다시 생성해 주세요.</p>{% endif %}
+    <form method="post" id="meal-plan-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="meal-plan-action" value="meal_plan">
+        {{ plan_form.non_field_errors }}
+        <div class="fields">
+        {% for field in plan_form %}
+            <div class="field{% if field.errors %} has-error{% endif %}">
+                {{ field.label_tag }}{{ field }}
+                {% if field.help_text %}<div class="help-text" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>{% endif %}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+        </div>
+        <p class="help-text">버튼을 누르면 식단 생성에 필요한 체중·운동 습관·최근 기록과 입력한 식사 조건을 Gemini에 전송합니다. 새로 생성한 식단은 날짜별 보관함에 자동 저장됩니다. 제안은 실제 식사 기록에 자동 추가되지 않습니다.</p>
+        <div class="form-actions"><button class="button button-primary" type="submit" id="meal-plan-submit" name="action" value="meal_plan" data-ai-submit {% if not profile_ready %}disabled{% endif %}>{% if plan %}식단 다시 생성{% else %}맞춤 식단 생성{% endif %}</button><a class="button" href="{% url 'profile_update' %}#exercise-habits">프로필·운동 습관 수정</a></div>
+        <p id="meal-plan-status" class="help-text" role="status"></p>
+    </form>
+</section>
+<section class="card plan-section" id="nutrition" aria-labelledby="nutrition-heading">
+    <h2 id="nutrition-heading">영양 기록 기반 보완 안내</h2>
+    {% if advice_error %}<p class="errorlist" role="alert">{{ advice_error }}</p>{% endif %}
+    <p class="plan-summary">{{ nutrition_summary.start_date }} ~ {{ nutrition_summary.end_date }} · 식사 {{ nutrition_summary.meal_count }}건 · 기록한 날짜 {{ nutrition_summary.recorded_days }}일</p>
+    <div class="weight-table-wrap"><table class="weight-table">
+        <thead><tr><th>항목</th><th>알려진 값의 합계</th><th>분석된 식사</th><th>미분석 식사</th></tr></thead>
+        <tbody>{% for nutrient in nutrition_summary.nutrients %}<tr><td>{{ nutrient.label }}</td><td>{% if nutrient.total != None %}{{ nutrient.total }} {{ nutrient.unit }}{% else %}미분석{% endif %}</td><td>{{ nutrient.known_count }}건</td><td>{{ nutrient.missing_count }}건</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% for message in nutrition_summary.messages %}<p class="help-text">{{ message }}</p>{% endfor %}
+    <p class="help-text">위의 선호 음식·알레르기·제한 조건도 함께 반영합니다. 버튼을 누를 때만 Gemini에 기록을 전송합니다.</p>
+    <button class="button button-primary" type="submit" form="meal-plan-form" name="action" value="nutrition_advice" data-ai-submit {% if not nutrition_summary.meal_count %}disabled{% endif %}>AI 영양 보완 안내{% if nutrition_advice %} 다시{% endif %} 받기</button>
+    {% if advice_stale %}<p class="form-note" role="status">날짜·기록·프로필·식사 조건이 변경되었습니다. 현재 정보로 보완 안내를 다시 받아 주세요.</p>{% endif %}
+    {% if nutrition_advice %}
+    <p class="plan-summary">{{ nutrition_advice.summary }}</p>
+    {% for item in nutrition_advice.items %}
+    <div class="form-note"><strong>{{ item.nutrient }}</strong><p><strong>기록에서 확인한 점:</strong> {{ item.observation }}</p><p><strong>보완 방법:</strong> {{ item.suggestion }}</p></div>
+    {% endfor %}
+    <ul class="help-text">{% for caution in nutrition_advice.cautions %}<li>{{ caution }}</li>{% endfor %}</ul>
+    {% endif %}
+    <p class="help-text">일부 기록만으로 실제 영양 결핍을 진단할 수 없습니다. 식이섬유·비타민·미네랄은 현재 저장 항목에 없어 부족 여부를 평가하지 않습니다.</p>
+</section>
+{% include 'records/includes/meal_plan_result.html' %}
+{% if saved_plan_id %}<p class="help-text" role="status">생성한 식단을 보관했습니다. <a href="{% url 'saved_meal_plan' saved_plan_id %}">보관된 식단 보기 →</a></p>{% endif %}
+<p class="form-note">음식과 영양 수치는 AI 추정치입니다. 개인별 필요 열량을 계산한 처방 식단이 아니며, 미입력 기록을 영양 결핍으로 판단하지 않습니다. 알레르기가 있다면 실제 재료·성분표와 교차 접촉 여부를 확인하세요.</p>
+<script>
+document.getElementById('meal-plan-form').addEventListener('submit', event => {
+    const action = event.submitter ? event.submitter.value : 'meal_plan';
+    document.getElementById('meal-plan-action').value = action;
+    document.querySelectorAll('[data-ai-submit]').forEach(button => { button.disabled = true; });
+    document.getElementById('meal-plan-status').textContent = action === 'nutrition_advice' ? '영양 보완 안내를 생성하고 있습니다. 잠시 기다려 주세요.' : '맞춤 식단을 생성하고 있습니다. 잠시 기다려 주세요.';
+});
+</script>
+{% endblock %}

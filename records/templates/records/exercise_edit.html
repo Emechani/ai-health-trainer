@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>운동 기록 수정</title>
+</head>
+<body style="padding: 20px; font-family: sans-serif;">
+    {% include 'includes/standalone_navigation.html' %}
+    <h2>✏️ 운동 기록 수정</h2>
+    <div style="border: 1px solid #ccc; padding: 20px; border-radius: 8px; max-width: 400px;">
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            
+            <!-- 1. 꼬리표를 숨겨서 뷰(views.py)로 같이 전송합니다 -->
+            <input type="hidden" name="from_page" value="{{ request.GET.from }}">
+        
+            <button type="submit">수정 완료</button>
+        
+            <!-- 2. 취소 버튼도 꼬리표가 있으면 달력으로, 없으면 오늘의 기록으로 보냅니다 -->
+            {% if request.GET.from == 'calendar' %}
+                <a href="{% url 'exercise_calendar' %}">취소</a>
+            {% else %}
+                <a href="{% url 'today_record' %}">취소</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- 오늘의 기록 화면과 동일한 드롭다운 제어 스크립트 추가 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const realInput = document.getElementById('id_exercise_name');
+            const distanceField = document.getElementById('id_distance_km').closest('p');
+            const form = realInput.closest('form'); // 현재 폼 요소 찾기
+            
+            const selectBox = document.createElement('select');
+            selectBox.innerHTML = `
+                <option value="걷기">걷기</option>
+                <option value="달리기">달리기</option>
+                <option value="축구">축구</option>
+                <option value="농구">농구</option>
+                <option value="기타">기타 (직접 입력)</option>
+            `;
+            
+            realInput.parentNode.insertBefore(selectBox, realInput);
+            realInput.style.marginLeft = '10px';
+    
+            // 초기값 세팅
+            const currentVal = realInput.value;
+            if (currentVal && !['걷기', '달리기', '축구', '농구'].includes(currentVal)) {
+                selectBox.value = '기타';
+                realInput.style.display = 'inline-block';
+            } else if (currentVal) {
+                selectBox.value = currentVal;
+                realInput.style.display = 'none';
+            } else {
+                selectBox.value = '걷기';
+                realInput.value = '걷기';
+                realInput.style.display = 'none';
+            }
+    
+            if (selectBox.value === '걷기' || selectBox.value === '달리기') {
+                distanceField.style.display = 'block';
+            } else {
+                distanceField.style.display = 'none';
+            }
+    
+            selectBox.addEventListener('change', function() {
+                if (selectBox.value === '기타') {
+                    realInput.style.display = 'inline-block';
+                    realInput.value = '';
+                    realInput.focus();
+                } else {
+                    realInput.style.display = 'none';
+                    realInput.value = selectBox.value;
+                }
+    
+                if (selectBox.value === '걷기' || selectBox.value === '달리기') {
+                    distanceField.style.display = 'block';
+                } else {
+                    distanceField.style.display = 'none';
+                    document.getElementById('id_distance_km').value = ''; 
+                }
+            });
+    
+            // ⭐ 핵심: 폼이 전송될 때 '기타' 상태라면 직접 입력한 텍스트가 서버로 확실히 넘어가도록 강제함
+            form.addEventListener('submit', function() {
+                if (selectBox.value !== '기타') {
+                    realInput.value = selectBox.value;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>식사 기록 수정</title>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f4f6f9; padding: 40px; }
+        .box { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: #333; }
+        label { font-weight: bold; font-size: 0.9em; color: #555; display: block; margin-top: 15px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .btn-submit { width: 100%; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        .btn-cancel { display: block; text-align: center; margin-top: 10px; color: #666; text-decoration: none; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    {% include 'includes/standalone_navigation.html' %}
+    <div class="box">
+        <h2>🍽️ 식사 기록 수동 수정</h2>
+        <p style="font-size: 0.9em; color: #777;">AI가 잘못 인식한 경우 직접 수정할 수 있습니다.</p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <label for="{{ form.meal_type.id_for_label }}">식사 종류</label>
+            {{ form.meal_type }}
+            {{ form.meal_type.errors }}
+
+            <label for="{{ form.food_name.id_for_label }}">음식 이름</label>
+            {{ form.food_name }}
+            {{ form.food_name.errors }}
+
+            <label for="{{ form.calories.id_for_label }}">칼로리 (kcal)</label>
+            {{ form.calories }}
+            {{ form.calories.errors }}
+
+            <label for="{{ form.carbs.id_for_label }}">탄수화물 (g)</label>
+            {{ form.carbs }}{{ form.carbs.errors }}
+            <label for="{{ form.protein.id_for_label }}">단백질 (g)</label>
+            {{ form.protein }}{{ form.protein.errors }}
+            <label for="{{ form.fat.id_for_label }}">지방 (g)</label>
+            {{ form.fat }}{{ form.fat.errors }}
+            <p style="font-size: .85em; color: #777; line-height: 1.6;">영양소는 g 단위 정수로 입력해 주세요. 빈칸은 미분석, 0은 실제 0으로 구분합니다. 일부 식사 기록만으로 영양 결핍을 판단하지 않습니다.</p>
+            <button type="submit" class="btn-submit">수정 완료</button>
+            <a href="{% url 'meal_record' %}?date={{ meal.daily_record.date|date:'Y-m-d' }}" class="btn-cancel">취소하고 돌아가기</a>
+        </form>
+    </div>
+</body>
+</html>

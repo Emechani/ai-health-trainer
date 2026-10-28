@@ -1,0 +1,32 @@
+.env
+.env.*
+!.env.example
+
+.google_tokens/
+token.json
+credentials.json
+credentials_google_health.json
+
+# Local Django secret, virtual environments and generated files
+.django-dev-secret
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Personal databases, uploads, logs and backups
+*.sqlite3
+*.sqlite3-*
+*.db
+/media/
+/meal_images/
+/uploads/
+/staticfiles/
+/backups/
+*.bak
+*.log
+/credentials*.json
+/token*.json

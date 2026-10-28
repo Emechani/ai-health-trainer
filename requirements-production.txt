@@ -1,0 +1,5 @@
+-r requirements.txt
+# WSGI server (Windows/Linux) and shared-cache client
+waitress==3.0.2
+redis==8.1.0
+whitenoise==6.12.0

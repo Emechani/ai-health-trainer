@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>다이어트 목표 설정</title>
+</head>
+<body>
+    {% include 'includes/standalone_navigation.html' %}
+    <h1>나의 다이어트 목표 설정</h1>
+    <p>정확한 AI 맞춤 식단 설계를 위해 체중 정보를 입력해 주세요.</p>
+    
+    <form method="POST">
+        <!-- 보안 토큰(해킹 방지) 필수 추가 -->
+        {% csrf_token %} 
+        
+        <!-- views.py에서 넘겨준 폼을 화면에 출력 -->
+        {{ form.as_p }} 
+        
+        <p style="color: gray; font-size: 14px;">
+            시작 체중은 목표를 시작했을 때의 체중입니다. 과거 시작 체중을 모르면 비워 두고, 새로운 목표를 시작할 때 기준을 정해 주세요.
+        </p>
+        
+        <button type="submit">목표 저장 및 AI 분석 시작</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>로그인</title>
+</head>
+<body>
+    {% include 'includes/standalone_navigation.html' %}
+    <h2>다이어트 AI 시스템 로그인</h2>
+    
+    <!-- 로그인 실패 시 에러 메시지 출력 -->
+    {% if form.errors %}
+        <p style="color: red;">아이디나 비밀번호가 올바르지 않습니다.</p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <!-- next는 로그인 성공 후 원래 가려던 페이지로 돌려보내 주는 역할을 합니다 -->
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit">로그인</button>
+    </form>
+
+    <div style="margin-top: 20px;">
+        <p>아직 다이어트 계정이 없으신가요? <a href="/users/signup/">회원가입하기</a></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,936 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>운동 달력 & AI 트레이너</title>
+
+    <style>
+        /* ========================================
+           1. 공통 기본 설정
+        ======================================== */
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(
+                135deg,
+                #e0f7fa 0%,
+                #fce4ec 100%
+            );
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        /* ========================================
+           2. 전체 앱 레이아웃
+           모든 페이지에서 동일하게 사용
+        ======================================== */
+        .app-container {
+            display: flex;
+            width: 100%;
+            max-width: 1400px;
+            height: 90vh;
+            min-height: 560px;
+            margin: 0 auto;
+
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+
+            overflow: hidden;
+        }
+
+        /* ========================================
+           3. 왼쪽 사이드바
+        ======================================== */
+        .sidebar {
+            flex: 0 0 78px;
+            width: 78px;
+            min-width: 78px;
+            height: 100%;
+
+            background: rgba(255, 255, 255, 0.95);
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            padding: 30px 0;
+            gap: 24px;
+
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
+            z-index: 10;
+        }
+
+        .sidebar .logo {
+            width: 50px;
+            height: 50px;
+            flex: 0 0 50px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 28px;
+            margin-bottom: 0;
+        }
+
+        /* 아이콘 버튼 크기 완전 통일 */
+        .sidebar a {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            min-height: 50px;
+
+            flex: 0 0 50px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            margin: 0;
+            padding: 0;
+
+            text-decoration: none;
+            border-radius: 15px;
+            background: transparent;
+
+            transition:
+                background 0.2s ease,
+                box-shadow 0.2s ease;
+
+            overflow: hidden;
+        }
+
+        .sidebar a span {
+            display: block;
+            width: 28px;
+            height: 28px;
+
+            font-size: 24px;
+            line-height: 28px;
+            text-align: center;
+
+            font-family:
+                "Apple Color Emoji",
+                "Segoe UI Emoji",
+                "Noto Color Emoji",
+                sans-serif;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: #333;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ========================================
+           4. 중앙 콘텐츠 영역
+        ======================================== */
+        .main-content {
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 0;
+            height: 100%;
+
+            padding: 40px 48px;
+
+            background: rgba(250, 250, 252, 0.6);
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+        /* 달력 또는 홈의 흰색 카드 */
+        .cal-inner-box {
+            width: 100%;
+            flex: 1 1 auto;
+            min-width: 0;
+            min-height: 0;
+
+            background: #fff;
+            border-radius: 25px;
+            padding: 30px;
+
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: auto;
+        }
+
+        /* ========================================
+           5. 오른쪽 AI 패널
+           첫 번째 사진 기준 너비 398px
+        ======================================== */
+        .chat-section {
+            flex: 0 0 398px;
+            width: 398px;
+            min-width: 398px;
+            max-width: 398px;
+
+            height: 100%;
+            min-height: 0;
+
+            padding: 40px 30px;
+
+            background: #2b2d31;
+            color: white;
+
+            display: flex;
+            flex-direction: column;
+
+            border-radius: 35px 0 0 35px;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+
+            overflow: hidden;
+        }
+
+        /* AI 패널 제목 */
+        .chat-section h3 {
+            flex: 0 0 auto;
+
+            margin: 0 0 20px;
+            padding-bottom: 15px;
+
+            font-size: 1.5em;
+            line-height: 1.4;
+
+            border-bottom: 1px solid #444;
+            color: #4caf50;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* AI 안내 문구 */
+        .chat-section p {
+            flex: 0 0 auto;
+
+            margin: 0 0 20px;
+
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: #aaa;
+        }
+
+        /* ========================================
+           6. 채팅 메시지 영역
+        ======================================== */
+        .chat-box {
+            flex: 1 1 0;
+            min-height: 0;
+            min-width: 0;
+
+            overflow-y: auto;
+            overflow-x: hidden;
+
+            background: #383a40;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-msg {
+            padding: 14px 18px;
+            border-radius: 15px;
+
+            max-width: 100%;
+            min-width: 0;
+
+            line-height: 1.6;
+            font-size: 1em;
+            color: white;
+
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+
+        .chat-ai {
+            background: #2e3035;
+            align-self: flex-start;
+
+            border-bottom-left-radius: 0;
+            border: 1px solid #444;
+        }
+
+        .chat-user {
+            background: #4caf50;
+            align-self: flex-end;
+
+            border-bottom-right-radius: 0;
+            color: white;
+        }
+
+        /* ========================================
+           7. 채팅 입력창
+        ======================================== */
+        .chat-input-area {
+            flex: 0 0 auto;
+            width: 100%;
+            min-width: 0;
+
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            flex: 1 1 0;
+            width: 0;
+            min-width: 0;
+
+            padding: 14px;
+
+            border: none;
+            background: #383a40;
+            color: white;
+            border-radius: 12px;
+
+            outline: none;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .chat-input-area input::placeholder {
+            color: #888;
+        }
+
+        .chat-input-area button {
+            flex: 0 0 auto;
+
+            padding: 14px 18px;
+
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 12px;
+
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            font-family: inherit;
+
+            transition: background 0.2s;
+        }
+
+        .chat-input-area button:hover {
+            background: #43a047;
+        }
+
+        .chat-history-controls { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; margin-bottom: 10px; }
+        .chat-history-controls select { flex: 1; width: 0; min-width: 0; padding: 10px; background: #383a40; color: #fff; border: 1px solid #555; border-radius: 10px; font: inherit; font-size: .85em; }
+        .chat-history-controls button { padding: 10px; background: transparent; color: #b9e3bb; border: 1px solid #668068; border-radius: 10px; cursor: pointer; white-space: nowrap; }
+        .chat-section .chat-status { font-size: .8em; line-height: 1.6; margin-bottom: 12px; min-height: 2.6em; }
+        .chat-section button:disabled, .chat-section input:disabled { opacity: .55; cursor: not-allowed; }
+        .chat-section select:focus-visible, .chat-section button:focus-visible, .chat-section input:focus-visible { outline: 2px solid #8bc58d; outline-offset: 3px; }
+
+        /* ========================================
+           8. 달력 헤더
+        ======================================== */
+        .cal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        .cal-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .cal-header a {
+            flex-shrink: 0;
+
+            text-decoration: none;
+            color: #555;
+            background: #f0f0f0;
+
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+
+            transition: background 0.2s;
+        }
+
+        .cal-header a:hover {
+            background: #e0e0e0;
+        }
+
+        /* ========================================
+           9. 달력 테이블
+        ======================================== */
+        .calendar-table {
+            width: 100%;
+            flex-shrink: 0;
+
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .calendar-table th {
+            background: #f8f9fa;
+            padding: 15px 0;
+
+            color: #888;
+            font-weight: bold;
+
+            border-bottom: 2px solid #eee;
+
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .calendar-table td {
+            border: 1px solid #eee;
+
+            height: 120px;
+            min-height: 120px;
+
+            vertical-align: top;
+            padding: 10px;
+
+            transition: background 0.2s;
+            overflow-wrap: anywhere;
+        }
+
+        .calendar-table td:hover {
+            background: #fafafa;
+        }
+
+        .today-cell {
+            background: #f1f8e9 !important;
+            border: 2px solid #4caf50 !important;
+        }
+
+        /* ========================================
+           10. 일정 / 식사 / 운동 태그
+        ======================================== */
+        .tag {
+            font-size: 0.75em;
+            padding: 4px 6px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+
+            display: block;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            font-weight: 500;
+        }
+
+        .tag-event {
+            background: #ffca28;
+            color: #fff;
+        }
+
+        .tag-meal {
+            background: #fff;
+            color: #e64a19;
+            border: 1px dashed #ffab91;
+        }
+
+        .tag-ex {
+            background: #42a5f5;
+            color: #fff;
+        }
+
+        /* ========================================
+           11. 스크롤바
+        ======================================== */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ========================================
+           12. 작은 화면 대응
+        ======================================== */
+        @media (max-width: 1100px) {
+            .chat-section {
+                flex-basis: 340px;
+                width: 340px;
+                min-width: 340px;
+                max-width: 340px;
+
+                padding: 30px 22px;
+            }
+
+            .main-content {
+                padding: 25px;
+            }
+
+            .cal-inner-box {
+                padding: 20px;
+            }
+
+            .cal-header h2 {
+                font-size: 1.4em;
+            }
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 0;
+                align-items: flex-start;
+            }
+
+            .app-container {
+                width: 100%;
+                height: auto;
+                min-height: 100vh;
+                border-radius: 0;
+
+                flex-direction: column;
+                overflow: visible;
+            }
+
+            .sidebar {
+                order: 0;
+
+                width: 100%;
+                min-width: 0;
+                height: auto;
+                flex: 0 0 auto;
+
+                flex-direction: row;
+                justify-content: center;
+
+                padding: 10px;
+                gap: 12px;
+            }
+
+            .sidebar .logo {
+                margin-right: 10px;
+            }
+
+            .main-content {
+                order: 1;
+
+                width: 100%;
+                height: auto;
+                min-height: 500px;
+
+                padding: 16px;
+                overflow: visible;
+            }
+
+            .cal-inner-box {
+                min-height: 450px;
+                padding: 15px;
+                border-radius: 18px;
+            }
+
+            .chat-section {
+                order: 2;
+
+                width: 100%;
+                min-width: 0;
+                max-width: none;
+                flex: 0 0 auto;
+
+                height: 550px;
+                min-height: 550px;
+
+                padding: 25px 20px;
+                border-radius: 25px 25px 0 0;
+            }
+
+            .cal-header {
+                flex-wrap: wrap;
+            }
+
+            .cal-header h2 {
+                font-size: 1.2em;
+            }
+
+            .cal-header a {
+                padding: 8px;
+                font-size: 0.85em;
+            }
+
+            .calendar-table td {
+                height: 95px;
+                padding: 4px;
+            }
+
+            .tag {
+                font-size: 0.65em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <!-- 1. 왼쪽 사이드바 -->
+        {% include 'includes/sidebar.html' %}
+
+        <!-- 2. 중앙 달력 영역 -->
+        <main class="main-content">
+            <div class="cal-inner-box">
+
+                <div class="cal-header">
+                    <a href="?year={{ prev_year }}&month={{ prev_month }}">
+                        ◀ 이전 달
+                    </a>
+
+                    <h2>{{ year }}년 {{ month }}월</h2>
+
+                    <a href="?year={{ next_year }}&month={{ next_month }}">
+                        다음 달 ▶
+                    </a>
+                </div>
+                {% if calendar_error %}<p role="status">{{ calendar_error }}</p>{% endif %}
+
+                <table class="calendar-table">
+                    <thead>
+                        <tr>
+                            <th style="color: #e53935;">일</th>
+                            <th>월</th>
+                            <th>화</th>
+                            <th>수</th>
+                            <th>목</th>
+                            <th>금</th>
+                            <th style="color: #1e88e5;">토</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for week in cal_data %}
+                        <tr>
+                            {% for day_data in week %}
+
+                                {% if day_data.day == 0 %}
+                                <td style="background: #fafbfc; border: none;"></td>
+
+                                {% else %}
+                                <td class="{% if day_data.is_today %}today-cell{% endif %}">
+
+                                    <strong style="
+                                        display: block;
+                                        margin-bottom: 8px;
+                                        color: {% if forloop.counter0 == 0 %}#e53935{% elif forloop.counter0 == 6 %}#1e88e5{% else %}#333{% endif %};
+                                    ">
+                                        {{ day_data.day }}
+                                    </strong>
+
+                                    {% for event in day_data.google_events %}
+                                    <span class="tag tag-event" title="{{ event }}">
+                                        📅 {{ event }}
+                                    </span>
+                                    {% endfor %}
+
+                                    {% for meal in day_data.meals %}
+                                    <span class="tag tag-meal" title="{{ meal.food_name }}">
+                                        🍔 {{ meal.food_name }} ({{ meal.calories }}kcal)
+                                    </span>
+                                    {% endfor %}
+
+                                    {% for ex in day_data.exercises %}
+                                    <span class="tag tag-ex" title="{{ ex.exercise_name }}">
+                                        🏃‍♂️ {{ ex.exercise_name }}
+                                        {% if ex.steps %}
+                                            ({{ ex.steps }}보)
+                                        {% else %}
+                                            ({{ ex.calories_burned }}kcal)
+                                        {% endif %}
+                                    </span>
+                                    {% endfor %}
+
+                                </td>
+                                {% endif %}
+
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+        </main>
+
+        <!-- 3. 오른쪽 AI 트레이너 -->
+        <aside class="chat-section">
+
+            <h3>🤖 AI 트레이너</h3>
+
+            <p>식단/운동에 대해 질문해보세요!</p>
+
+            <div class="chat-history-controls">
+                <select id="chat-date" aria-label="대화 날짜 선택" onchange="loadChatHistory(this.value)">
+                    <option value="{{ chat_today }}">오늘 · {{ chat_today }}</option>
+                    {% for chat_date in chat_dates %}<option value="{{ chat_date }}">{{ chat_date }} 대화</option>{% endfor %}
+                </select>
+                <button type="button" id="chat-today-button" onclick="loadChatHistory(chatToday)">오늘 대화</button>
+            </div>
+            <p id="chat-status" class="chat-status" role="status">한국 시간 기준 오늘 대화입니다. 이전 대화는 날짜를 선택해 확인하세요.</p>
+
+            <div class="chat-box" id="chat-box">
+
+                <div class="chat-msg chat-ai">
+                    <strong>🤖 AI 트레이너:</strong><br>
+                    안녕하세요! 오늘의 운동이나 식단에 대해 궁금한 점을 물어보세요!
+                </div>
+
+                {% for chat in chat_history %}
+
+                    {% if chat.is_ai %}
+                    <div class="chat-msg chat-ai">
+                        <strong>🤖 AI 트레이너:</strong><br>
+                        {{ chat.message|linebreaksbr }}
+                    </div>
+                    {% else %}
+                    <div class="chat-msg chat-user">
+                        <strong>나:</strong><br>
+                        {{ chat.message|linebreaksbr }}
+                    </div>
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+            <div class="chat-input-area">
+                <input
+                    type="text"
+                    id="chat-input"
+                    maxlength="2000"
+                    placeholder="질문을 입력하세요..."
+                    onkeypress="if(event.key === 'Enter') sendMessage()"
+                >
+
+                <button type="button" id="chat-send-button" onclick="sendMessage()">
+                    전송
+                </button>
+            </div>
+
+        </aside>
+
+    </div>
+
+    <!-- 4. AI 채팅 JavaScript -->
+    <script>
+        // 메시지를 HTML로 직접 삽입하지 않고 텍스트로 표시
+        // 사용자가 입력한 HTML이 실행되는 문제를 방지
+        function appendMessage(type, sender, message) {
+            const chatBox = document.getElementById('chat-box');
+
+            const messageElement = document.createElement('div');
+            messageElement.className = `chat-msg ${type}`;
+
+            const senderElement = document.createElement('strong');
+            senderElement.textContent = sender + ':';
+
+            const contentElement = document.createElement('div');
+            contentElement.style.whiteSpace = 'pre-wrap';
+            contentElement.textContent = message;
+
+            messageElement.appendChild(senderElement);
+            messageElement.appendChild(document.createElement('br'));
+            messageElement.appendChild(contentElement);
+
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            return messageElement;
+        }
+
+        let chatToday = '{{ chat_today|escapejs }}';
+        let selectedChatDate = chatToday;
+        let chatBusy = false;
+        let historyBusy = false;
+
+        function updateChatControls() {
+            const archive = selectedChatDate !== chatToday;
+            document.getElementById('chat-input').disabled = chatBusy || historyBusy || archive;
+            document.getElementById('chat-send-button').disabled = chatBusy || historyBusy || archive;
+            document.getElementById('chat-date').disabled = chatBusy || historyBusy;
+            document.getElementById('chat-today-button').disabled = chatBusy || historyBusy;
+            document.getElementById('chat-input').placeholder = archive ? '이전 대화는 읽기 전용입니다.' : '질문을 입력하세요...';
+        }
+
+        function populateChatDates(dates) {
+            const select = document.getElementById('chat-date');
+            const values = [...new Set([chatToday, ...dates])].filter(value => value <= chatToday).sort().reverse();
+            select.replaceChildren();
+            for (const value of values) {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value === chatToday ? `오늘 · ${value}` : `${value} 대화`;
+                select.appendChild(option);
+            }
+            select.value = selectedChatDate;
+        }
+
+        async function loadChatHistory(day) {
+            if (historyBusy) return false;
+            historyBusy = true;
+            updateChatControls();
+            const status = document.getElementById('chat-status');
+            status.textContent = '대화를 불러오는 중입니다...';
+            try {
+                const response = await fetch("{% url 'chat_history_api' %}?date=" + encodeURIComponent(day), {cache: 'no-store'});
+                const data = await response.json();
+                if (!response.ok || data.status !== 'success') throw new Error(data.message || '대화를 불러오지 못했습니다.');
+                chatToday = data.today;
+                selectedChatDate = data.date;
+                populateChatDates(data.dates);
+                document.getElementById('chat-box').replaceChildren();
+                if (!data.messages.length) {
+                    appendMessage('chat-ai', '🤖 AI 트레이너', selectedChatDate === chatToday
+                        ? '새로운 하루의 대화입니다. 오늘의 운동이나 식단에 대해 질문해보세요!'
+                        : '이 날짜에 저장된 대화가 없습니다.');
+                }
+                for (const item of data.messages) {
+                    appendMessage(item.is_ai ? 'chat-ai' : 'chat-user', item.is_ai ? '🤖 AI 트레이너' : '나', item.message);
+                }
+                status.textContent = selectedChatDate === chatToday
+                    ? '한국 시간 기준 오늘 대화입니다. 이전 대화는 날짜를 선택해 확인하세요.'
+                    : `${selectedChatDate} 대화 · 읽기 전용입니다. 질문하려면 ‘오늘 대화’로 돌아가세요.`;
+                return true;
+            } catch (error) {
+                document.getElementById('chat-date').value = selectedChatDate;
+                status.textContent = '대화를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+                return false;
+            } finally {
+                historyBusy = false;
+                updateChatControls();
+            }
+        }
+
+        async function checkChatDay() {
+            if (chatBusy || historyBusy) return;
+            try {
+                const response = await fetch("{% url 'chat_history_api' %}?status=1", {cache: 'no-store'});
+                const data = await response.json();
+                if (!response.ok || data.status !== 'success') return;
+                if (data.today !== chatToday) {
+                    const viewingToday = selectedChatDate === chatToday;
+                    const oldToday = chatToday;
+                    chatToday = data.today;
+                    if (viewingToday) {
+                        if (!await loadChatHistory(chatToday)) { chatToday = oldToday; updateChatControls(); }
+                    } else {
+                        populateChatDates([...document.getElementById('chat-date').options].map(option => option.value));
+                        updateChatControls();
+                    }
+                }
+            } catch (error) {
+                // 통신이 복구되면 다시 확인하며, 입력 중인 문장은 유지합니다.
+            }
+        }
+
+        async function sendMessage() {
+            if (chatBusy || historyBusy || selectedChatDate !== chatToday) return;
+            await checkChatDay();
+            if (chatBusy || historyBusy || selectedChatDate !== chatToday) return;
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message || message.length > 2000) return;
+            chatBusy = true;
+            updateChatControls();
+            appendMessage('chat-user', '나', message);
+            input.value = '';
+            try {
+                const response = await fetch("{% url 'ai_chat_api' %}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                    body: JSON.stringify({message: message, date: selectedChatDate})
+                });
+                const data = await response.json();
+                if (data.today && data.today !== chatToday) {
+                    chatToday = data.today;
+                    await loadChatHistory(chatToday);
+                    if (response.status === 409) {
+                        input.value = message;
+                        document.getElementById('chat-status').textContent = '날짜가 바뀌었습니다. 질문을 다시 전송해 주세요.';
+                    } else if (data.status !== 'success') {
+                        appendMessage('chat-ai', '안내', data.message || '답변을 가져오지 못했습니다.');
+                    }
+                } else if (response.ok && data.status === 'success') {
+                    appendMessage('chat-ai', '🤖 AI 트레이너', data.reply);
+                } else {
+                    appendMessage('chat-ai', '안내', data.message || '답변을 가져오지 못했습니다.');
+                }
+            } catch (error) {
+                appendMessage('chat-ai', '안내', '서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.');
+            } finally {
+                chatBusy = false;
+                updateChatControls();
+                if (selectedChatDate === chatToday) input.focus();
+            }
+        }
+
+        // 자정 전환, 백그라운드 탭 복귀, 절전 해제 후에도 서버의 오늘 날짜를 확인합니다.
+        function scheduleMidnightCheck() {
+            const koreaNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+            const elapsed = ((koreaNow.getUTCHours() * 60 + koreaNow.getUTCMinutes()) * 60 + koreaNow.getUTCSeconds()) * 1000 + koreaNow.getUTCMilliseconds();
+            setTimeout(async () => { await checkChatDay(); scheduleMidnightCheck(); }, 86400000 - elapsed + 300);
+        }
+        window.addEventListener('load', function () {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.scrollTop = chatBox.scrollHeight;
+            updateChatControls();
+            checkChatDay();
+            scheduleMidnightCheck();
+        });
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) checkChatDay(); });
+        setInterval(checkChatDay, 60000);
+
+    </script>
+</body>
+</html>

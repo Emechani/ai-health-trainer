@@ -1,0 +1,36 @@
+# Paid service + persistent disk. Review charges before clicking Deploy Blueprint.
+services:
+  - type: web
+    name: ai-health-trainer
+    runtime: python
+    region: singapore
+    plan: starter
+    numInstances: 1
+    autoDeployTrigger: off
+    buildCommand: python scripts/render_build.py
+    startCommand: python scripts/render_start.py
+    healthCheckPath: /healthz/
+    disk:
+      name: health-private-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.6
+      - key: DJANGO_ENV
+        value: production
+      - key: DJANGO_DEBUG
+        value: "false"
+      # Enter a new 50+ character key. Render generateValue is only 44 characters.
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DJANGO_DB_PATH
+        value: /var/data/db.sqlite3
+      - key: DJANGO_MEDIA_ROOT
+        value: /var/data/media
+      - key: GOOGLE_TOKEN_DIR
+        value: /var/data/google_tokens
+      - key: GOOGLE_ACTIVITY_PROVIDER
+        value: google_health
+      - key: GOOGLE_HEALTH_CLIENT_SECRETS_FILE
+        value: /etc/secrets/credentials_google_health.json

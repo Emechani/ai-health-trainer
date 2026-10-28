@@ -1,0 +1,16 @@
+{% if plan %}
+<section class="card plan-section" aria-labelledby="plan-result-heading">
+    <h2 id="plan-result-heading">{{ plan_heading|default:"오늘의 식단 제안" }}</h2><p class="plan-summary">{{ plan.summary }}</p>
+    <p class="plan-nutrients">제안 식단 예상 합계: <strong>{{ plan.totals.calories }} kcal</strong> · 탄수화물 {{ plan.totals.carbs }} g · 단백질 {{ plan.totals.protein }} g · 지방 {{ plan.totals.fat }} g</p>
+</section>
+<div class="meal-plan-grid">
+    {% for meal in plan.meals %}
+    <section class="card" aria-labelledby="meal-{{ meal.meal_type }}"><h3 id="meal-{{ meal.meal_type }}">{{ meal.label }}</h3>
+        <h2>{{ meal.food_name }}</h2><p class="plan-summary">{{ meal.portion }}</p>
+        <p class="plan-nutrients">예상 {{ meal.calories }} kcal<br>탄수화물 {{ meal.carbs }} g<br>단백질 {{ meal.protein }} g · 지방 {{ meal.fat }} g</p>
+        <p class="help-text">{{ meal.reason }}</p>
+    </section>
+    {% endfor %}
+</div>
+<section class="card plan-section" aria-labelledby="plan-notes-heading"><h2 id="plan-notes-heading">식단 참고 사항</h2><ul class="plan-summary">{% for note in plan.notes %}<li>{{ note }}</li>{% endfor %}</ul></section>
+{% endif %}
