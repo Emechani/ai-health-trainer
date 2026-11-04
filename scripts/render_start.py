@@ -8,6 +8,8 @@ from pathlib import Path
 def main():
     if os.environ.get('RENDER') != 'true':
         raise RuntimeError('This entry point is for Render only')
+    if os.environ.get('DJANGO_ENV') != 'production':
+        raise RuntimeError('Render must use DJANGO_ENV=production')
     root = Path(__file__).resolve().parents[1]
     data = Path('/var/data')
     if not data.is_dir():
