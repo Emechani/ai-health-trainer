@@ -469,6 +469,8 @@
             color: #fff;
         }
 
+        .mobile-day-button, .mobile-day-agenda, .trainer-shortcut { display: none; }
+
         /* ========================================
            11. 스크롤바
         ======================================== */
@@ -568,7 +570,7 @@
             }
 
             .cal-inner-box {
-                min-height: 450px;
+                min-height: 0;
                 padding: 15px;
                 border-radius: 18px;
             }
@@ -581,8 +583,8 @@
                 max-width: none;
                 flex: 0 0 auto;
 
-                height: 550px;
-                min-height: 550px;
+                height: auto;
+                min-height: 0;
 
                 padding: 25px 20px;
                 border-radius: 25px 25px 0 0;
@@ -608,7 +610,29 @@
 
             .tag {
                 font-size: 0.65em;
+                white-space: normal;
+                overflow-wrap: anywhere;
             }
+            .chat-box { flex: none; height: clamp(240px, 45svh, 420px); }
+            .trainer-shortcut { display: inline-block; margin: 0 0 16px; color: #387d3b; font-size: 13px; }
+            .calendar-mobile-ready .calendar-table td { height: 64px; min-height: 0; padding: 2px; }
+            .calendar-mobile-ready .day-number { display: none !important; }
+            .calendar-mobile-ready .day-record-tags { display: none; }
+            .calendar-mobile-ready .mobile-day-button {
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                gap: 5px; width: 100%; min-height: 60px; padding: 4px 1px;
+                border: 0; border-radius: 6px; background: transparent; color: inherit;
+                font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+            }
+            .mobile-day-button small { font-size: 10px; font-weight: 400; color: #596e7a; }
+            .mobile-day-button:focus-visible { outline: 2px solid #2196f3; outline-offset: -2px; }
+            .calendar-table td.selected-day { background: #e8f3f8; box-shadow: inset 0 0 0 2px #789eae; }
+            .calendar-mobile-ready .mobile-day-agenda { display: block; padding-top: 20px; }
+            .mobile-day-agenda h3 { margin: 0 0 10px; font-size: 16px; }
+            .mobile-day-agenda p { font-size: 12px; color: #71808a; line-height: 1.6; }
+            .mobile-day-agenda ul { list-style: none; margin: 0; padding: 0; }
+            .agenda-item { margin-top: 8px; padding: 12px; border-radius: 10px; font-size: 13px; line-height: 1.7; white-space: normal; overflow-wrap: anywhere; }
+            .agenda-item.tag-event { color: #594500; background: #fff4cd; }
         }
     </style>
 </head>
@@ -635,6 +659,7 @@
                     </a>
                 </div>
                 {% if calendar_error %}<p role="status">{{ calendar_error }}</p>{% endif %}
+                <a class="trainer-shortcut" href="#ai-trainer">AI 트레이너 대화로 이동 ↓</a>
 
                 <table class="calendar-table">
                     <thead>
@@ -660,7 +685,7 @@
                                 {% else %}
                                 <td class="{% if day_data.is_today %}today-cell{% endif %}">
 
-                                    <strong style="
+                                    <strong class="day-number" style="
                                         display: block;
                                         margin-bottom: 8px;
                                         color: {% if forloop.counter0 == 0 %}#e53935{% elif forloop.counter0 == 6 %}#1e88e5{% else %}#333{% endif %};
@@ -668,6 +693,14 @@
                                         {{ day_data.day }}
                                     </strong>
 
+                                    <button class="mobile-day-button" type="button" data-day="{{ day_data.day }}"
+                                            aria-label="{{ month }}월 {{ day_data.day }}일 기록 보기" aria-controls="mobile-day-agenda" aria-pressed="false">
+                                        <span>{{ day_data.day }}</span>
+                                        <small>
+                                            {% if day_data.google_events or day_data.meals or day_data.exercises %}●{% else %}—{% endif %}
+                                        </small>
+                                    </button>
+                                    <div class="day-record-tags">
                                     {% for event in day_data.google_events %}
                                     <span class="tag tag-event" title="{{ event }}">
                                         📅 {{ event }}
@@ -690,6 +723,7 @@
                                         {% endif %}
                                     </span>
                                     {% endfor %}
+                                    </div>
 
                                 </td>
                                 {% endif %}
@@ -699,12 +733,17 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <section class="mobile-day-agenda" id="mobile-day-agenda" aria-labelledby="mobile-day-title">
+                    <h3 id="mobile-day-title">날짜별 일정·기록</h3>
+                    <p>달력에서 날짜를 누르면 일정과 식사·운동 내용을 모두 볼 수 있습니다.</p>
+                    <ul id="mobile-day-records" aria-live="polite"></ul>
+                </section>
 
             </div>
         </main>
 
         <!-- 3. 오른쪽 AI 트레이너 -->
-        <aside class="chat-section">
+        <aside class="chat-section" id="ai-trainer">
 
             <h3>🤖 AI 트레이너</h3>
 
@@ -764,6 +803,43 @@
 
     <!-- 4. AI 채팅 JavaScript -->
     <script>
+        // 모바일에서는 좁은 날짜 칸 대신 선택한 날짜의 내용을 별도 목록으로 표시합니다.
+        (() => {
+            const calendar = document.querySelector('.cal-inner-box');
+            const buttons = [...calendar.querySelectorAll('.mobile-day-button')];
+            const list = document.getElementById('mobile-day-records');
+            function showDay(button) {
+                buttons.forEach(item => {
+                    const selected = item === button;
+                    item.setAttribute('aria-pressed', String(selected));
+                    item.closest('td').classList.toggle('selected-day', selected);
+                });
+                document.getElementById('mobile-day-title').textContent = `{{ year }}년 {{ month }}월 ${button.dataset.day}일`;
+                list.replaceChildren();
+                const tags = button.closest('td').querySelectorAll('.day-record-tags .tag');
+                tags.forEach(tag => {
+                    const item = document.createElement('li');
+                    item.className = 'agenda-item ' + (tag.classList.contains('tag-event') ? 'tag-event' : tag.classList.contains('tag-meal') ? 'tag-meal' : 'tag-ex');
+                    item.textContent = tag.textContent.trim().replace(/\s+/g, ' ');
+                    list.appendChild(item);
+                });
+                if (!tags.length) {
+                    const item = document.createElement('li');
+                    item.className = 'agenda-item';
+                    item.textContent = '이 날짜에는 등록된 일정이나 식사·운동 기록이 없습니다.';
+                    list.appendChild(item);
+                }
+            }
+            buttons.forEach(button => {
+                const count = button.closest('td').querySelectorAll('.day-record-tags .tag').length;
+                button.querySelector('small').textContent = count ? `${count}건` : '—';
+                button.setAttribute('aria-label', button.getAttribute('aria-label') + `, ${count}건`);
+                button.addEventListener('click', () => showDay(button));
+            });
+            const initial = calendar.querySelector('.today-cell .mobile-day-button') || buttons.find(button => button.closest('td').querySelector('.tag')) || buttons[0];
+            if (initial) { showDay(initial); calendar.classList.add('calendar-mobile-ready'); }
+        })();
+
         // 메시지를 HTML로 직접 삽입하지 않고 텍스트로 표시
         // 사용자가 입력한 HTML이 실행되는 문제를 방지
         function appendMessage(type, sender, message) {
