@@ -1,23 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>회원가입</title>
-</head>
-<body>
-    {% include 'includes/standalone_navigation.html' %}
-    <h2>다이어트 AI 시스템 회원가입</h2>
-    <p>새로운 계정을 만들어 목표 체중 달성을 시작해 보세요!</p>
-    <p>입력한 현재 체중은 시작 체중으로 저장됩니다. 나중에 프로필 설정에서 수정할 수 있어요. 체중 입력은 선택 사항입니다.</p>
-    
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">가입하기</button>
-    </form>
-    
-    <div style="margin-top: 20px;">
-        <p>이미 계정이 있으신가요? <a href="/accounts/login/">로그인하러 가기</a></p>
-    </div>
-</body>
-</html>
+{% extends 'registration/auth_base.html' %}
+{% block title %}회원가입 · Health Overview{% endblock %}
+{% block content %}<h1 id="auth-title">건강한 변화의 시작</h1><p class="subtitle">계정을 만들고 나에게 맞는 목표를 시작해 보세요.<br>현재 체중은 시작 체중으로도 저장되며, 체중 입력은 선택 사항입니다.</p>
+<form method="post">{% csrf_token %}{% include 'registration/auth_fields.html' with signup=True %}<button class="primary" type="submit">계정 만들기</button></form>
+<p class="account-footer">이미 계정이 있으신가요? <a href="{% url 'login' %}">로그인</a></p>{% endblock %}

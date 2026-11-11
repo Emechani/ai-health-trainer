@@ -1,12 +1,22 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
 
 from .models import UserProfile, WeightRecord, current_weight_day, record_weight
 
 
+class AccountLoginForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = '아이디'
+        self.fields['username'].widget.attrs.update({'autocomplete': 'username', 'placeholder': '아이디를 입력해 주세요'})
+        self.fields['password'].widget.attrs['placeholder'] = '비밀번호를 입력해 주세요'
+
+
 class CustomSignupForm(UserCreationForm):
+    email = forms.EmailField(label='복구 이메일', max_length=254, help_text='아이디 찾기와 비밀번호 재설정에 사용합니다.',
+                             widget=forms.EmailInput(attrs={'autocomplete': 'email'}))
     real_name = forms.CharField(label='실명', max_length=50, required=True)
     nickname = forms.CharField(label='닉네임', max_length=50, required=True)
     current_weight = forms.FloatField(label='현재 체중 (kg)', required=False, min_value=0.01)
@@ -14,7 +24,7 @@ class CustomSignupForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('username',)
+        fields = ('username', 'email')
         labels = {'username': '로그인 ID'}
 
     @transaction.atomic
@@ -66,6 +76,32 @@ class UserProfileForm(forms.ModelForm):
 
 
 class ProfileUpdateForm(UserProfileForm):
+    recovery_email = forms.EmailField(label='복구 이메일', max_length=254, required=False,
+                                     help_text='기존 계정도 이메일을 등록하면 아이디·비밀번호를 찾을 수 있습니다.')
+    email_password = forms.CharField(label='이메일 변경 확인용 현재 비밀번호', required=False,
+                                    widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}),
+                                    help_text='복구 이메일을 변경할 때만 입력해 주세요.')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['recovery_email'].initial = self.instance.user.email
+
+    def clean(self):
+        data = super().clean()
+        email = data.get('recovery_email', '')
+        self.update_email = self.is_bound and 'recovery_email' in self.data and email != self.instance.user.email
+        if self.update_email and not self.instance.user.check_password(data.get('email_password', '')):
+            self.add_error('email_password', '이메일을 변경하려면 현재 비밀번호를 정확히 입력해 주세요.')
+        return data
+
+    @transaction.atomic
+    def save(self, commit=True):
+        profile = super().save(commit=commit)
+        if commit and getattr(self, 'update_email', False):
+            profile.user.email = self.cleaned_data['recovery_email']
+            profile.user.save(update_fields=['email'])
+        return profile
+
     class Meta(UserProfileForm.Meta):
         fields = ['nickname', 'start_weight', 'current_weight', 'target_weight']
         labels = {**UserProfileForm.Meta.labels, 'nickname': '닉네임'}

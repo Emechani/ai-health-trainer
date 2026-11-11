@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}계정 · Health Overview{% endblock %}</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 32px 30px; min-height: 100vh; color: #29343b; font-family: 'Malgun Gothic', sans-serif; background: linear-gradient(135deg,#e0f7fa,#fce4ec); }
+a { color: #466774; text-underline-offset: 4px; }
+button,input { font: inherit; }
+.auth-shell { width: min(1100px,100%); min-height: 650px; margin: 24px auto; display: grid; grid-template-columns: .8fr 1.2fr; border-radius: 30px; overflow: hidden; background: rgba(255,255,255,.8); box-shadow: 0 20px 45px rgba(35,48,55,.09); }
+.auth-intro { background: #292b2f; color: #fff; padding: 48px 34px; display: flex; flex-direction: column; justify-content: center; }
+.brand { color: #bdd3d9; font-size: 13px; letter-spacing: .08em; font-weight: 700; }
+.auth-intro h2 { font-size: 30px; line-height: 1.5; letter-spacing: -.05em; margin: 24px 0 16px; }
+.auth-intro p { font-size: 14px; color: #c7d0d5; line-height: 1.9; }
+.intro-note { border-top: 1px solid #464a50; padding-top: 22px; margin-top: 28px; }
+.auth-content { min-width: 0; padding: 44px 42px; }
+h1 { margin: 0 0 12px; color: #18242b; font-size: 28px; letter-spacing: -.04em; }
+.subtitle { margin: 0 0 28px; color: #71808a; font-size: 14px; line-height: 1.8; }
+.fields { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.signup-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.field { min-width: 0; }
+.field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+.field input { width: 100%; min-height: 48px; padding: 12px 14px; background: #f7f9fb; border: 1px solid #dae3e8; border-radius: 12px; }
+.field input:focus { outline: 3px solid rgba(84,110,122,.16); border-color: #7895a2; background: white; }
+.field:has(.errorlist) input { border-color: #bf4f5b; }
+.help { margin-top: 7px; font-size: 12px; color: #73818b; line-height: 1.7; }
+.help ul { padding-left: 17px; margin: 5px 0; }
+.errorlist { font-size: 13px; color: #ad3548; padding-left: 18px; line-height: 1.6; }
+.notice { background: #edf5f7; padding: 14px 16px; border-radius: 12px; color: #58717d; font-size: 13px; line-height: 1.8; margin: 22px 0; }
+.primary { width: 100%; min-height: 48px; border: 0; border-radius: 12px; background: #546e7a; color: #fff; font-weight: 700; padding: 12px 18px; cursor: pointer; margin-top: 24px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.primary:hover { background: #455a64; }
+.account-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; font-size: 13px; margin-top: 23px; }
+.account-footer { border-top: 1px solid #e5eaed; margin-top: 25px; padding-top: 22px; text-align: center; font-size: 13px; color: #71808a; line-height: 1.8; }
+a:focus-visible,button:focus-visible { outline: 3px solid #2196f3; outline-offset: 3px; }
+@media(max-width:1000px) { .auth-shell { grid-template-columns: 1fr; max-width: 680px; } .auth-intro { padding: 28px 32px; } .auth-intro h2 { font-size: 23px; margin: 12px 0; } .intro-note { display: none; } }
+@media(max-width:600px) { .auth-shell { margin: 16px auto; border-radius: 22px; min-height: auto; } .auth-intro { padding: 25px; } .auth-content { padding: 28px 22px; } .signup-fields { grid-template-columns: 1fr; } h1 { font-size: 25px; } }
+</style>
+</head>
+<body>
+{% include 'includes/standalone_navigation.html' %}
+<main class="auth-shell">
+<aside class="auth-intro" aria-label="서비스 소개"><span class="brand">HEALTH OVERVIEW</span><h2>나의 기록에서 시작하는<br>건강한 변화</h2><p>식사와 운동, 체중 변화를 한곳에 기록하고<br>나에게 맞는 실천 계획을 만나보세요.</p><p class="intro-note">💪 매일의 작은 실천을 함께합니다.</p></aside>
+<section class="auth-content" aria-labelledby="auth-title">{% block content %}{% endblock %}</section>
+</main>
+</body></html>

@@ -194,7 +194,7 @@ class ProfileWeightTests(TestCase):
 class SignupWeightTests(TestCase):
     def signup_form(self, username, current='', target=''):
         return CustomSignupForm({
-            'username': username, 'real_name': '테스트', 'nickname': '테스트',
+            'username': username, 'real_name': '테스트', 'nickname': '테스트', 'email': 'test@example.com',
             'password1': 'ExampleSafePass_92!', 'password2': 'ExampleSafePass_92!',
             'current_weight': current, 'target_weight': target,
         })

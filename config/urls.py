@@ -19,12 +19,17 @@ from django.urls import path, include
 from django.conf import settings # 추가
 from django.conf.urls.static import static # 추가
 from main.health import health_check
+from users.account_recovery import AccountPasswordResetView
+from django.contrib.auth.views import LoginView
+from users.forms import AccountLoginForm
 
 urlpatterns = [
     path('healthz/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
     path('users/', include('users.urls')),
+    path('accounts/login/', LoginView.as_view(authentication_form=AccountLoginForm), name='login'),
+    path('accounts/password_reset/', AccountPasswordResetView.as_view(), name='password_reset'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('records/', include('records.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

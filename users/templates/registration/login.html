@@ -1,28 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>로그인</title>
-</head>
-<body>
-    {% include 'includes/standalone_navigation.html' %}
-    <h2>다이어트 AI 시스템 로그인</h2>
-    
-    <!-- 로그인 실패 시 에러 메시지 출력 -->
-    {% if form.errors %}
-        <p style="color: red;">아이디나 비밀번호가 올바르지 않습니다.</p>
-    {% endif %}
-
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <!-- next는 로그인 성공 후 원래 가려던 페이지로 돌려보내 주는 역할을 합니다 -->
-        <input type="hidden" name="next" value="{{ next }}">
-        <button type="submit">로그인</button>
-    </form>
-
-    <div style="margin-top: 20px;">
-        <p>아직 다이어트 계정이 없으신가요? <a href="/users/signup/">회원가입하기</a></p>
-    </div>
-</body>
-</html>
+{% extends 'registration/auth_base.html' %}
+{% block title %}로그인 · Health Overview{% endblock %}
+{% block content %}<h1 id="auth-title">다시 만나 반가워요</h1><p class="subtitle">로그인하고 오늘의 건강 기록을 이어가세요.</p>
+<form method="post">{% csrf_token %}{% include 'registration/auth_fields.html' %}
+<input type="hidden" name="next" value="{{ next }}"><button class="primary" type="submit">로그인</button></form>
+<div class="account-links"><a href="{% url 'find_username' %}">아이디 찾기</a><a href="{% url 'password_reset' %}">비밀번호 재설정</a></div>
+<p class="account-footer">아직 계정이 없으신가요? <a href="{% url 'signup' %}">회원가입</a></p>{% endblock %}

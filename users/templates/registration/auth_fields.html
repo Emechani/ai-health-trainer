@@ -1,0 +1,8 @@
+{{ form.non_field_errors }}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="fields {% if signup %}signup-fields{% endif %}">
+{% for field in form.visible_fields %}<div class="field">
+<label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %} <span class="help">(선택)</span>{% endif %}</label>
+{{ field }}{{ field.errors }}
+{% if field.help_text %}<div class="help" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</div>{% endif %}
+</div>{% endfor %}</div>
