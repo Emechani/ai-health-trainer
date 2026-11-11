@@ -306,12 +306,12 @@
         @media (max-width: 1200px) {
             .forms-container { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
         }
-        @media (max-width: 700px) {
-            .main-content { padding: 16px; }
+        @media (max-width: 760px) {
             .header h2 { font-size: 1.25em; }
-            .forms-container { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; flex: 0 0 auto; }
+            .forms-container { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; flex: 0 0 auto; min-height: 0; }
             .input-card { overflow-y: visible; }
-            .list-card { height: 380px; }
+            .list-card { height: auto; }
+            .list-card .record-list { flex: 0 0 auto; max-height: none; overflow: visible; scrollbar-gutter: auto; }
         }
     </style>
 </head>
