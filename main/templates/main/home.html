@@ -946,11 +946,15 @@
 
                         <div style="display: flex; flex-direction: column; gap: 4px;">
 
-                            {% if not day_data.google_events and not day_data.meals and not day_data.exercises %}
+                            {% if not day_data.google_events and not day_data.meals and not day_data.exercises and day_data.health_steps == None %}
 
                                 <div class="no-record">기록 없음</div>
 
                             {% else %}
+
+                                {% if day_data.health_steps != None %}
+                                <div class="tag-item tag-ex" title="Google Health 걸음 수">👟 {{ day_data.health_steps }}보 · Health</div>
+                                {% endif %}
 
                                 {% for event in day_data.google_events %}
                                 <div class="tag-item tag-event" title="{{ event }}">
@@ -978,17 +982,19 @@
                     {% endfor %}
                 </div>
 
-                <!-- AI 주간 분석 -->
+                <!-- Google Health 날짜별 걸음 수 연동 -->
                 <div class="ai-section">
-                    <form method="POST" style="margin: 0;">
+                    <form method="POST" action="{% url 'sync_health_steps' %}" style="margin: 0;">
                         {% csrf_token %}
 
                         <button type="submit"
-                                name="get_ai_feedback"
                                 class="btn-ai">
-                            ✨ AI 트레이너 주간 분석 받기
+                            👟 걸음 수 연동하기
                         </button>
                     </form>
+
+                    <p class="notice-caption">이번 주 일요일부터 오늘까지 Google Health에 수신된 걸음 수를 저장합니다. 수동 운동 기록과 별도로 표시합니다.</p>
+                    {% if steps_sync_notice %}<p class="notice-caption" role="status">{{ steps_sync_notice }}</p>{% endif %}
 
                     {% if ai_feedback %}
                     <div class="ai-feedback-box">

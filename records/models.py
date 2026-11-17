@@ -13,6 +13,16 @@ class DailyRecord(models.Model):
     def __str__(self):
         return f"{self.user.username}님의 기록 - {self.date}"
 
+class GoogleHealthStepRecord(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField('측정 날짜')
+    steps = models.PositiveBigIntegerField('Google Health 걸음 수')
+    synced_at = models.DateTimeField('최근 연동 시각', auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'date'], name='unique_health_steps_user_date')]
+
+
 # 2. 개별 식사 기록 (UC5 음식 분류 모델 연동 대비)
 class Meal(models.Model):
     MEAL_TYPES = (

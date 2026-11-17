@@ -697,10 +697,13 @@
                                             aria-label="{{ month }}월 {{ day_data.day }}일 기록 보기" aria-controls="mobile-day-agenda" aria-pressed="false">
                                         <span>{{ day_data.day }}</span>
                                         <small>
-                                            {% if day_data.google_events or day_data.meals or day_data.exercises %}●{% else %}—{% endif %}
+                                            {% if day_data.google_events or day_data.meals or day_data.exercises or day_data.health_steps != None %}●{% else %}—{% endif %}
                                         </small>
                                     </button>
                                     <div class="day-record-tags">
+                                    {% if day_data.health_steps != None %}
+                                    <span class="tag tag-ex" title="Google Health 걸음 수">👟 {{ day_data.health_steps }}보 · Google Health</span>
+                                    {% endif %}
                                     {% for event in day_data.google_events %}
                                     <span class="tag tag-event" title="{{ event }}">
                                         📅 {{ event }}

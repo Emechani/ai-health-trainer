@@ -106,9 +106,45 @@ def parse_health_daily_steps(payload, day):
 
 
 def google_health_daily_steps(credentials, day):
+    payload = _google_health_rollup(credentials, day, day + timedelta(days=1))
+    try:
+        return parse_health_daily_steps(payload, day)
+    except (ValueError, TypeError, AttributeError):
+        raise GoogleHealthError('INVALID_RESPONSE', 'Google Health 응답의 날짜 또는 걸음 수 형식을 확인할 수 없어 숫자를 반영하지 않았습니다.') from None
+
+
+def google_health_steps_range(credentials, start, end):
+    """종료일을 포함한 최대 7일을 한 번에 조회하고, 저장 전 전체 응답을 검증합니다."""
+    days = (end - start).days + 1
+    if not 1 <= days <= 7:
+        raise ValueError('Google Health sync requires one to seven days')
+    payload = _google_health_rollup(credentials, start, end + timedelta(days=1))
+    try:
+        if not isinstance(payload, dict) or payload.get('nextPageToken'):
+            raise ValueError('Incomplete Google Health response')
+        points = payload.get('rollupDataPoints', [])
+        if not isinstance(points, list) or len(points) > days:
+            raise ValueError('Invalid daily windows')
+        values, seen = {}, set()
+        allowed = {civil_midnight(start + timedelta(days=i))['date']['day']: start + timedelta(days=i) for i in range(days)}
+        for point in points:
+            stamp = point['civilStartTime']['date']
+            day = allowed.get(stamp['day'])
+            if day is None or day in seen:
+                raise ValueError('Unexpected or duplicate date')
+            count = parse_health_daily_steps({'rollupDataPoints': [point]}, day)
+            seen.add(day)
+            if count is not None:
+                values[day] = count
+        return values
+    except (ValueError, TypeError, AttributeError, KeyError):
+        raise GoogleHealthError('INVALID_RESPONSE', 'Google Health 날짜별 응답을 확인할 수 없어 기존 기록을 유지했습니다.') from None
+
+
+def _google_health_rollup(credentials, start, end):
     # 공식 v4 일별 집계 API: 조회만 하며 식사·운동·Google 데이터는 변경하지 않습니다.
-    body = {'range': {'start': civil_midnight(day), 'end': civil_midnight(day + timedelta(days=1))},
-            'windowSizeDays': 1, 'pageSize': 2}
+    body = {'range': {'start': civil_midnight(start), 'end': civil_midnight(end)},
+            'windowSizeDays': 1, 'pageSize': (end - start).days + 1}
     session = AuthorizedSession(credentials)
     try:
         response = session.post(
@@ -117,7 +153,7 @@ def google_health_daily_steps(credentials, day):
         if response.status_code != 200:
             raise health_error_from_response(response)
         try:
-            return parse_health_daily_steps(response.json(), day)
+            return response.json()
         except (ValueError, TypeError, AttributeError):
             raise GoogleHealthError('INVALID_RESPONSE', 'Google Health 응답의 날짜 또는 걸음 수 형식을 확인할 수 없어 숫자를 반영하지 않았습니다.') from None
     except (Timeout, ConnectionError):

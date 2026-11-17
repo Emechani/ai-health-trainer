@@ -6,11 +6,12 @@ from django.views.decorators.cache import never_cache
 import secrets
 from oauthlib.oauth2 import OAuth2Error
 from requests.exceptions import HTTPError as RequestsHTTPError
-from .google_activity import activity_provider, activity_scope, activity_label, google_health_daily_steps, GoogleHealthError
+from .google_activity import activity_provider, activity_scope, activity_label, google_health_daily_steps, google_health_steps_range, GoogleHealthError
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Sum
+from django.core.cache import cache
 import datetime
 import os.path
 import google.generativeai as genai
@@ -25,7 +26,7 @@ from .google_auth import CALENDAR_SCOPE, calendar_credentials, FITNESS_SCOPE, SC
 from googleapiclient.discovery import build
 
 from users.models import UserProfile, current_weight_day
-from records.models import DailyRecord, Meal, Exercise, GoalPlan
+from records.models import DailyRecord, Meal, Exercise, GoalPlan, GoogleHealthStepRecord
 from records.goal_progress import goal_progress_data
 from records.nutrition import nutrition_summary
 
@@ -66,6 +67,43 @@ def sync_google_walks(user, day, buckets):
             retained.append(entry.pk)
         # 구분 표시가 없는 기존 기록은 수동·자동 여부를 추측하지 않고 보존합니다.
         Exercise.objects.filter(daily_record=daily, exercise_name=Exercise.GOOGLE_FIT_NAME).exclude(pk__in=retained).delete()
+
+@login_required(login_url='/accounts/login/')
+@require_POST
+@never_cache
+def sync_health_steps(request):
+    """현재 사용자·이번 주의 걸음 수만 읽고, 일별 집계를 중복 없이 저장합니다."""
+    if activity_provider() != 'google_health':
+        request.session['steps_sync_notice'] = 'Google Health 연결을 설정한 뒤 다시 시도해 주세요.'
+        return redirect('home')
+    try:
+        creds = Credentials.from_authorized_user_file(str(google_token_path(request.user)))
+        if not creds.valid and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+            save_google_credentials(request.user, creds)
+        if not creds.valid or not creds.has_scopes([activity_scope()]):
+            request.session['steps_sync_notice'] = '걸음 수 읽기 권한을 확인하고 홈 아래에서 Google 계정을 다시 연결해 주세요.'
+            return redirect('home')
+        if not cache.add(f'health-steps-sync:{request.user.pk}', True, timeout=60):
+            request.session['steps_sync_notice'] = '연동을 방금 요청했습니다. 1분 후 다시 시도해 주세요.'
+            return redirect('home')
+        today = current_weight_day()
+        start = today - datetime.timedelta(days=(today.weekday() + 1) % 7)
+        values = google_health_steps_range(creds, start, today)
+        with transaction.atomic():
+            for day, count in values.items():
+                GoogleHealthStepRecord.objects.update_or_create(user=request.user, date=day, defaults={'steps': count})
+        request.session['steps_sync_notice'] = (
+            f'이번 주 걸음 수 {len(values)}일을 연동했습니다. 주간 활동과 달력에 반영했습니다.' if values else
+            'Google Health 조회는 성공했지만 이번 주 수신된 걸음 수 데이터가 없습니다. 기기 동기화와 연결 계정을 확인해 주세요. 기존 기록은 유지했습니다.')
+    except GoogleHealthError as error:
+        request.session['steps_sync_notice'] = str(error)
+    except (OSError, ValueError, RefreshError):
+        request.session['steps_sync_notice'] = 'Google Health 인증 파일 또는 연결을 확인해 주세요. 홈 아래에서 재인증할 수 있습니다.'
+    except Exception:
+        request.session['steps_sync_notice'] = '걸음 수를 연동하지 못했습니다. 기존 기록은 유지했습니다. 잠시 후 다시 시도해 주세요.'
+    return redirect('home')
+
 
 @login_required(login_url='/accounts/login/')
 @never_cache
@@ -265,6 +303,8 @@ def home(request):
 
     # 3. 이번 주 7일 데이터 조립 (운동 + 식사 + 구글 일정)
     week_days = []
+    saved_health_steps = dict(GoogleHealthStepRecord.objects.filter(
+        user=request.user, date__range=[cal_start_of_week, today]).values_list('date', 'steps'))
     day_names = ['일', '월', '화', '수', '목', '금', '토']
     
     for i in range(7):
@@ -283,6 +323,7 @@ def home(request):
             'exercises': exercises,
             'meals': meals,
             'google_events': google_events_for_day,
+            'health_steps': saved_health_steps.get(current_date),
         })
 
     # 취소·실패 직후에는 재이동하지 않고, 정상 조회 후 다음 만료부터 자동 연결을 허용합니다.
@@ -306,6 +347,7 @@ def home(request):
     context = {
         'home_goal_plan': home_goal_plan,
         'home_today_plan': home_today_plan,
+        'steps_sync_notice': request.session.pop('steps_sync_notice', ''),
         'activity_provider_label': provider_label,
         'calendar_connected': calendar_connected,
         'google_health_error': google_health_error,

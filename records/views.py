@@ -550,6 +550,10 @@ def exercise_calendar(request):
         daily_record__date__month=month
     )
 
+    from .models import GoogleHealthStepRecord
+    health_steps_dict = dict(GoogleHealthStepRecord.objects.filter(
+        user=request.user, date__year=year, date__month=month).values_list('date__day', 'steps'))
+
     exercise_dict = {}
     for ex in exercises:
         day = ex.daily_record.date.day
@@ -581,6 +585,7 @@ def exercise_calendar(request):
                     'exercises': exercise_dict.get(day, []),
                     'meals': meal_dict.get(day, []), 
                     'google_events': google_events_dict.get(day, []), 
+                    'health_steps': health_steps_dict.get(day),
                     'is_today': (day == today.day and month == today.month and year == today.year)
                 })
         cal_data.append(week_data)
