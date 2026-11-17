@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.cache import never_cache
 import secrets
 from oauthlib.oauth2 import OAuth2Error
 from requests.exceptions import HTTPError as RequestsHTTPError
-from .google_activity import activity_provider, activity_scope, activity_label, google_health_daily_steps, google_health_steps_range, GoogleHealthError
+from .google_activity import activity_provider, activity_scope, activity_label, google_health_daily_steps, google_health_steps_range, google_health_latest_step_before, GoogleHealthError
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db import transaction
@@ -72,37 +72,67 @@ def sync_google_walks(user, day, buckets):
 @require_POST
 @never_cache
 def sync_health_steps(request):
-    """현재 사용자·이번 주의 걸음 수만 읽고, 일별 집계를 중복 없이 저장합니다."""
-    if activity_provider() != 'google_health':
-        request.session['steps_sync_notice'] = 'Google Health 연결을 설정한 뒤 다시 시도해 주세요.'
+    """한 번 클릭하면 브라우저가 90일씩 이어서 요청하며, 서버가 조회 범위를 관리합니다."""
+    wants_json = 'application/json' in request.headers.get('Accept', '')
+
+    def reply(message, *, done=False, status=200, **details):
+        if done or status != 200 or not wants_json:
+            request.session['steps_sync_notice'] = message
+        if wants_json:
+            return JsonResponse({'ok': status == 200, 'done': done, 'message': message, **details}, status=status)
         return redirect('home')
+
+    if activity_provider() != 'google_health':
+        return reply('Google Health 연결을 설정한 뒤 다시 시도해 주세요.', status=400)
+    state = request.session.get('health_steps_sync')
+    continuation = request.POST.get('sync_id', '')
+    if continuation and (not state or not secrets.compare_digest(continuation, state.get('id', ''))):
+        return reply('연동 세션이 만료되었습니다. 페이지를 새로고침한 뒤 다시 눌러 주세요.', status=409)
+    lock_key = f'health-steps-lock:{request.user.pk}'
+    lock_value = secrets.token_urlsafe(16)
+    if not cache.add(lock_key, lock_value, timeout=90):
+        return reply('걸음 수 연동을 처리 중입니다. 잠시 후 다시 확인해 주세요.', status=429)
     try:
         creds = Credentials.from_authorized_user_file(str(google_token_path(request.user)))
         if not creds.valid and creds.expired and creds.refresh_token:
             creds.refresh(Request())
             save_google_credentials(request.user, creds)
         if not creds.valid or not creds.has_scopes([activity_scope()]):
-            request.session['steps_sync_notice'] = '걸음 수 읽기 권한을 확인하고 홈 아래에서 Google 계정을 다시 연결해 주세요.'
-            return redirect('home')
-        if not cache.add(f'health-steps-sync:{request.user.pk}', True, timeout=60):
-            request.session['steps_sync_notice'] = '연동을 방금 요청했습니다. 1분 후 다시 시도해 주세요.'
-            return redirect('home')
-        today = current_weight_day()
-        start = today - datetime.timedelta(days=(today.weekday() + 1) % 7)
-        values = google_health_steps_range(creds, start, today)
+            return reply('걸음 수 읽기 권한을 확인하고 홈 아래에서 Google 계정을 다시 연결해 주세요.', status=403)
+        if not continuation:
+            if not cache.add(f'health-steps-sync:{request.user.pk}', True, timeout=60):
+                return reply('연동을 방금 요청했습니다. 1분 후 다시 시도해 주세요.', status=429)
+            # 중단된 전체 연동이 있으면 마지막으로 완료한 구간 다음부터 이어갑니다.
+            state = state or {'id': secrets.token_urlsafe(24), 'cursor': current_weight_day().isoformat(), 'total': 0}
+        end = datetime.date.fromisoformat(state['cursor'])
+        if end > current_weight_day():
+            return reply('연동 날짜가 유효하지 않습니다. 새로고침 후 다시 시도해 주세요.', status=400)
+        start = end - datetime.timedelta(days=min(89, (end - datetime.date.min).days))
+        values = google_health_steps_range(creds, start, end)
+        # 빈 90일 구간만 보고 종료하지 않고, 그 이전에 접근 가능한 데이터가 있는지 확인합니다.
+        older = google_health_latest_step_before(creds, start) if start > datetime.date.min else None
         with transaction.atomic():
             for day, count in values.items():
                 GoogleHealthStepRecord.objects.update_or_create(user=request.user, date=day, defaults={'steps': count})
-        request.session['steps_sync_notice'] = (
-            f'이번 주 걸음 수 {len(values)}일을 연동했습니다. 주간 활동과 달력에 반영했습니다.' if values else
-            'Google Health 조회는 성공했지만 이번 주 수신된 걸음 수 데이터가 없습니다. 기기 동기화와 연결 계정을 확인해 주세요. 기존 기록은 유지했습니다.')
+        state['total'] += len(values)
+        if older is None:
+            request.session.pop('health_steps_sync', None)
+            message = (f"조회 가능한 전체 기간의 걸음 수 {state['total']}일을 연동했습니다. 같은 날짜는 중복 없이 갱신했습니다."
+                       if state['total'] else 'Google Health에 조회 가능한 걸음 수 데이터가 없습니다. 기기 동기화와 연결 계정을 확인해 주세요. 기존 기록은 유지했습니다.')
+            return reply(message, done=True, synced_days=state['total'])
+        state['cursor'] = (start - datetime.timedelta(days=1)).isoformat()
+        request.session['health_steps_sync'] = state
+        return reply(f"{start:%Y-%m-%d} ~ {end:%Y-%m-%d} 확인 · {state['total']}일 반영. 과거 기록을 이어서 조회합니다.",
+                     sync_id=state['id'], synced_days=state['total'])
     except GoogleHealthError as error:
-        request.session['steps_sync_notice'] = str(error)
+        return reply(str(error), status=503)
     except (OSError, ValueError, RefreshError):
-        request.session['steps_sync_notice'] = 'Google Health 인증 파일 또는 연결을 확인해 주세요. 홈 아래에서 재인증할 수 있습니다.'
+        return reply('Google Health 인증 파일 또는 연결을 확인해 주세요. 홈 아래에서 재인증할 수 있습니다.', status=503)
     except Exception:
-        request.session['steps_sync_notice'] = '걸음 수를 연동하지 못했습니다. 기존 기록은 유지했습니다. 잠시 후 다시 시도해 주세요.'
-    return redirect('home')
+        return reply('전체 걸음 수 연동을 완료하지 못했습니다. 저장된 기록은 유지했습니다. 잠시 후 다시 눌러 주세요.', status=503)
+    finally:
+        if cache.get(lock_key) == lock_value:
+            cache.delete(lock_key)
 
 
 @login_required(login_url='/accounts/login/')

@@ -7,7 +7,7 @@ from django.db import IntegrityError, transaction
 from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from main.google_activity import GoogleHealthError, civil_midnight, google_health_steps_range
+from main.google_activity import GoogleHealthError, civil_midnight, google_health_steps_range, google_health_latest_step_before
 from records.models import DailyRecord, Exercise, GoogleHealthStepRecord
 from users.models import current_weight_day
 
@@ -55,7 +55,8 @@ class StepSyncTests(TestCase):
         credentials.has_scopes.return_value = True
         with patch('main.views.Credentials.from_authorized_user_file', return_value=credentials), \
              patch('main.views.current_weight_day', return_value=self.today), \
-             patch('main.views.google_health_steps_range', return_value=values or {}, side_effect=error) as fetch:
+             patch('main.views.google_health_steps_range', return_value=values or {}, side_effect=error) as fetch, \
+             patch('main.views.google_health_latest_step_before', return_value=None):
             response = self.client.post(reverse('sync_health_steps'), {'user': self.other.pk, 'date': '2099-01-01'})
         return response, fetch
 
@@ -65,7 +66,7 @@ class StepSyncTests(TestCase):
                                           end_time=time(10, 30), steps=1500, calories_burned=70)
         response, fetch = self.sync({self.today: 4000})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(fetch.call_args.args[1:], (date(2026, 11, 15), self.today))
+        self.assertEqual(fetch.call_args.args[1:], (self.today - timedelta(days=89), self.today))
         cache.clear()
         self.sync({self.today: 5000})
         self.assertEqual(GoogleHealthStepRecord.objects.count(), 1)
@@ -136,3 +137,68 @@ class StepSyncTests(TestCase):
         self.assertContains(home, '걸음 수 연동하기')
         daily_fetch.assert_not_called()
         calendar_fetch.assert_not_called()
+
+    def test_all_history_continues_and_updates_instead_of_adding(self):
+        old_day = self.today - timedelta(days=90)
+        credentials = Mock(valid=True)
+        credentials.has_scopes.return_value = True
+        with patch('main.views.Credentials.from_authorized_user_file', return_value=credentials), \
+             patch('main.views.current_weight_day', return_value=self.today), \
+             patch('main.views.google_health_steps_range', side_effect=[{self.today: 4000}, {old_day: 2000}, {self.today: 4500}]) as fetch, \
+             patch('main.views.google_health_latest_step_before', side_effect=[old_day, None, None]):
+            first = self.client.post(reverse('sync_health_steps'), HTTP_ACCEPT='application/json').json()
+            self.assertFalse(first['done'])
+            finished = self.client.post(reverse('sync_health_steps'), {'sync_id': first['sync_id']}, HTTP_ACCEPT='application/json').json()
+            self.assertTrue(finished['done'])
+            self.assertEqual(finished['synced_days'], 2)
+            self.assertEqual(fetch.call_args_list[1].args[2], old_day)
+            cache.clear()
+            self.client.post(reverse('sync_health_steps'), HTTP_ACCEPT='application/json')
+        self.assertEqual(GoogleHealthStepRecord.objects.count(), 2)
+        self.assertEqual(GoogleHealthStepRecord.objects.get(user=self.user, date=self.today).steps, 4500)
+        self.assertEqual(GoogleHealthStepRecord.objects.get(user=self.user, date=old_day).steps, 2000)
+
+    def test_empty_recent_window_does_not_hide_older_history(self):
+        credentials = Mock(valid=True)
+        with patch('main.views.Credentials.from_authorized_user_file', return_value=credentials), \
+             patch('main.views.current_weight_day', return_value=self.today), \
+             patch('main.views.google_health_steps_range', return_value={}), \
+             patch('main.views.google_health_latest_step_before', return_value=date(2020, 1, 1)):
+            response = self.client.post(reverse('sync_health_steps'), HTTP_ACCEPT='application/json')
+        self.assertFalse(response.json()['done'])
+        self.assertIn('sync_id', response.json())
+
+    def test_invalid_continuation_cannot_call_external_api(self):
+        with patch('main.views.google_health_steps_range') as fetch:
+            response = self.client.post(reverse('sync_health_steps'), {'sync_id': 'another-session'}, HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code, 409)
+        fetch.assert_not_called()
+
+    def test_concurrent_request_is_blocked(self):
+        cache.set(f'health-steps-lock:{self.user.pk}', 'in-progress', 90)
+        with patch('main.views.google_health_steps_range') as fetch:
+            response = self.client.post(reverse('sync_health_steps'), HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code, 429)
+        fetch.assert_not_called()
+
+
+class HistoryProbeTests(SimpleTestCase):
+    def test_previous_data_is_probed_without_summing_raw_steps(self):
+        session = Mock()
+        session.get.return_value.status_code = 200
+        session.get.return_value.json.return_value = {'dataPoints': [{'steps': {
+            'interval': {'civilStartTime': civil_midnight(date(2020, 1, 1))}, 'count': '100'}}]}
+        with patch('main.google_activity.AuthorizedSession', return_value=session):
+            result = google_health_latest_step_before(Mock(), date(2026, 1, 1))
+        self.assertEqual(result, date(2020, 1, 1))
+        self.assertEqual(session.get.call_args.kwargs['params']['pageSize'], 1)
+        self.assertIn('2026-01-01', session.get.call_args.kwargs['params']['filter'])
+        session.close.assert_called_once()
+
+    def test_bad_history_response_is_not_treated_as_complete(self):
+        session = Mock()
+        session.get.return_value.status_code = 200
+        for payload in ({'dataPoints': [], 'nextPageToken': 'more'}, {'dataPoints': [{}]}, []):
+            session.get.return_value.json.return_value = payload
+            with self.subTest(payload=payload), patch('main.google_activity.AuthorizedSession', return_value=session), self.assertRaises(GoogleHealthError):
+                google_health_latest_step_before(Mock(), date(2026, 1, 1))

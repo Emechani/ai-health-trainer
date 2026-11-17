@@ -984,7 +984,7 @@
 
                 <!-- Google Health 날짜별 걸음 수 연동 -->
                 <div class="ai-section">
-                    <form method="POST" action="{% url 'sync_health_steps' %}" style="margin: 0;">
+                    <form method="POST" action="{% url 'sync_health_steps' %}" id="steps-sync-form" style="margin: 0;">
                         {% csrf_token %}
 
                         <button type="submit"
@@ -993,8 +993,9 @@
                         </button>
                     </form>
 
-                    <p class="notice-caption">이번 주 일요일부터 오늘까지 Google Health에 수신된 걸음 수를 저장합니다. 수동 운동 기록과 별도로 표시합니다.</p>
-                    {% if steps_sync_notice %}<p class="notice-caption" role="status">{{ steps_sync_notice }}</p>{% endif %}
+                    <p class="notice-caption">조회 가능한 전체 기간을 90일씩 나눠 연동합니다. 같은 날짜는 최신 집계로 갱신하고 수동 기록과 합산하지 않습니다. 완료까지 이 페이지를 열어 두세요. 중단되면 다시 눌러 이어갈 수 있습니다.</p>
+                    <p id="steps-sync-progress" class="notice-caption" role="status">{{ steps_sync_notice }}</p>
+                    <noscript><p class="notice-caption">전체 기간을 연속으로 연동하려면 브라우저의 JavaScript를 켜 주세요.</p></noscript>
 
                     {% if ai_feedback %}
                     <div class="ai-feedback-box">
@@ -1003,6 +1004,46 @@
                     {% endif %}
                 </div>
             </div>
+
+            <script>
+                (() => {
+                    const form = document.getElementById('steps-sync-form');
+                    const button = form.querySelector('button[type="submit"]');
+                    const progress = document.getElementById('steps-sync-progress');
+                    form.addEventListener('submit', async event => {
+                        event.preventDefault();
+                        if (button.disabled) return;
+                        button.disabled = true;
+                        button.textContent = '걸음 수 연동 중…';
+                        progress.textContent = '최근 기록부터 전체 기간을 확인합니다.';
+                        let syncId = '';
+                        try {
+                            while (true) {
+                                const body = new FormData(form);
+                                if (syncId) body.set('sync_id', syncId);
+                                const response = await fetch(form.action, {
+                                    method: 'POST', body, credentials: 'same-origin', cache: 'no-store',
+                                    headers: {'Accept': 'application/json'}
+                                });
+                                if (!response.headers.get('content-type')?.includes('application/json')) {
+                                    throw new Error('로그인 상태를 확인하고 다시 시도해 주세요.');
+                                }
+                                const result = await response.json();
+                                progress.textContent = result.message;
+                                if (!response.ok || !result.ok) break;
+                                if (result.done) { window.location.reload(); break; }
+                                if (!result.sync_id) throw new Error('연동을 이어갈 수 없습니다. 새로고침 후 다시 시도해 주세요.');
+                                syncId = result.sync_id;
+                            }
+                        } catch (error) {
+                            progress.textContent = '연동이 중단되었습니다. 기존 기록은 유지됩니다. 로그인·네트워크 상태를 확인하고 잠시 후 다시 눌러 주세요.';
+                        } finally {
+                            button.disabled = false;
+                            button.textContent = '👟 걸음 수 연동하기';
+                        }
+                    });
+                })();
+            </script>
 
             <section class="activity-card notice-card" aria-labelledby="google-fit-heading">
                 <h3 id="google-fit-heading">👟 {{ activity_provider_label }} 연결</h3>

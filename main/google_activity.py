@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 import re
 
 from django.conf import settings
@@ -114,10 +114,10 @@ def google_health_daily_steps(credentials, day):
 
 
 def google_health_steps_range(credentials, start, end):
-    """종료일을 포함한 최대 7일을 한 번에 조회하고, 저장 전 전체 응답을 검증합니다."""
+    """종료일을 포함한 최대 90일을 조회하고, 저장 전 전체 응답을 검증합니다."""
     days = (end - start).days + 1
-    if not 1 <= days <= 7:
-        raise ValueError('Google Health sync requires one to seven days')
+    if not 1 <= days <= 90:
+        raise ValueError('Google Health sync requires one to ninety days')
     payload = _google_health_rollup(credentials, start, end + timedelta(days=1))
     try:
         if not isinstance(payload, dict) or payload.get('nextPageToken'):
@@ -126,11 +126,11 @@ def google_health_steps_range(credentials, start, end):
         if not isinstance(points, list) or len(points) > days:
             raise ValueError('Invalid daily windows')
         values, seen = {}, set()
-        allowed = {civil_midnight(start + timedelta(days=i))['date']['day']: start + timedelta(days=i) for i in range(days)}
+        allowed = {start + timedelta(days=i) for i in range(days)}
         for point in points:
             stamp = point['civilStartTime']['date']
-            day = allowed.get(stamp['day'])
-            if day is None or day in seen:
+            day = date(stamp['year'], stamp['month'], stamp['day'])
+            if day not in allowed or day in seen:
                 raise ValueError('Unexpected or duplicate date')
             count = parse_health_daily_steps({'rollupDataPoints': [point]}, day)
             seen.add(day)
@@ -141,10 +141,43 @@ def google_health_steps_range(credentials, start, end):
         raise GoogleHealthError('INVALID_RESPONSE', 'Google Health 날짜별 응답을 확인할 수 없어 기존 기록을 유지했습니다.') from None
 
 
+def google_health_latest_step_before(credentials, before):
+    """과거 기록 존재 여부와 다음 조회 끝 날짜를 구합니다. 원시 걸음 수는 합산하지 않습니다."""
+    session = AuthorizedSession(credentials)
+    try:
+        response = session.get('https://health.googleapis.com/v4/users/me/dataTypes/steps/dataPoints',
+                               params={'pageSize': 1, 'filter': f'steps.interval.civil_start_time < "{before.isoformat()}"'},
+                               timeout=20, allow_redirects=False)
+        if response.status_code != 200:
+            raise health_error_from_response(response)
+        try:
+            payload = response.json()
+            if not isinstance(payload, dict):
+                raise ValueError('Invalid history response')
+            points = payload.get('dataPoints', [])
+            if not isinstance(points, list) or len(points) > 1:
+                raise ValueError('Invalid history page')
+            if not points:
+                if payload.get('nextPageToken'):
+                    raise ValueError('Incomplete history page')
+                return None
+            stamp = points[0]['steps']['interval']['civilStartTime']['date']
+            previous = date(stamp['year'], stamp['month'], stamp['day'])
+            if previous >= before:
+                raise ValueError('Unexpected history date')
+            return previous
+        except (ValueError, TypeError, KeyError, AttributeError):
+            raise GoogleHealthError('INVALID_RESPONSE', '이전 걸음 수의 날짜를 확인하지 못했습니다. 전체 연동을 완료한 것으로 처리하지 않았습니다.') from None
+    except (Timeout, ConnectionError):
+        raise GoogleHealthError('NETWORK_ERROR', '과거 걸음 수 조회 중 연결이 끊겼습니다. 잠시 후 연동을 다시 눌러 주세요.') from None
+    finally:
+        session.close()
+
+
 def _google_health_rollup(credentials, start, end):
     # 공식 v4 일별 집계 API: 조회만 하며 식사·운동·Google 데이터는 변경하지 않습니다.
     body = {'range': {'start': civil_midnight(start), 'end': civil_midnight(end)},
-            'windowSizeDays': 1, 'pageSize': (end - start).days + 1}
+            'windowSizeDays': 1, 'pageSize': min(90, (end - start).days + 1)}
     session = AuthorizedSession(credentials)
     try:
         response = session.post(
