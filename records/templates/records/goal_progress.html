@@ -25,13 +25,23 @@
 <p>{% if remaining_weight %}최종 목표까지 {{ remaining_weight }} kg {{ weight_direction }} 방향으로 나아가고 있어요.{% else %}목표 체중에 도달했어요. 이번 주에는 유지하는 습관을 이어가세요.{% endif %}</p>
 <p class="help-text">아래 실천 게이지는 체중 감량률·건강 점수가 아닙니다. 목표 도달 시점이나 감량을 보장하지 않습니다.</p></section>
 {% else %}<section class="card"><p>현재 체중과 목표 체중을 먼저 설정해 주세요.</p><a class="button" href="{% url 'profile_update' %}">프로필 설정</a></section>{% endif %}
+<section class="card goal-section" id="food-options">
+<h2>음식 선호·알레르기 및 제한 조건</h2>
+<p class="help-text">저장한 조건은 다음 주간 목표 생성에 반영됩니다. 이미 저장된 계획은 그대로 유지됩니다.</p>
+{% if options_saved %}<p class="form-note" role="status">음식 조건을 저장했습니다.</p>{% endif %}
+<form method="post" id="food-options-form" action="{% url 'goal_progress' %}">
+{% csrf_token %}<input type="hidden" name="action" id="food-options-action" value="save_food_options">
+<div class="fields">{% for field in food_options_form %}<div class="field">{{ field.label_tag }}{{ field }}{% if field.help_text %}<div class="help-text">{{ field.help_text }}</div>{% endif %}{{ field.errors }}</div>{% endfor %}</div>
+<div class="form-actions"><button type="submit" class="button" name="action" value="save_food_options">음식 조건 저장</button></div>
+<p id="food-options-status" class="help-text" role="status"></p>
+</form></section>
 <section class="card goal-section"><h2>✨ AI가 정해 주는 이번 주 목표</h2>
 <p>{{ week_start|date:'m/d' }} ~ {{ week_end|date:'m/d' }} · 한국 시간 월요일~일요일</p>
 <p class="help-text">현재·목표 체중의 차이, 최근 체중·식사·운동 기록, 운동 습관을 참고해 월~일 운동·휴식일과 요일별 세 끼 식단, 오늘 할 행동을 함께 정해 드립니다. 목표를 직접 입력하거나 식단을 먼저 생성할 필요가 없습니다.</p>
 {% if goal_error %}<p class="errorlist" role="alert">{{ goal_error }}</p>{% endif %}
 {% if active_week_plan %}<p>이번 주 목표가 준비되어 있어요. 오늘의 기록으로 한 걸음 더 채워 보세요!</p><a class="button" href="{% url 'goal_progress' %}?plan={{ active_week_plan.pk }}">이번 주 목표 보기</a>
-{% else %}<form method="post" id="weekly-goal-form">{% csrf_token %}<p class="help-text">버튼을 누르면 필요한 프로필과 최근 기록, 저장된 음식 선호·제한 조건을 Gemini에 보내 목표를 생성합니다. 처음이면 프로필의 운동 습관과 맞춤 식단의 알레르기·제한 조건을 먼저 확인해 주세요. 일주일 계획을 한 번에 만들기 때문에 잠시 시간이 걸릴 수 있습니다.</p><button id="weekly-goal-submit" class="button button-primary" type="submit" data-retry-seconds="{{ goal_retry_seconds }}" data-profile-ready="{{ profile_ready|yesno:'true,false' }}" {% if not profile_ready or goal_retry_seconds %}disabled{% endif %}>{% if goal_retry_seconds %}{{ goal_retry_seconds }}초 후 다시 시도{% else %}✨ AI로 이번 주 목표 받기{% endif %}</button><p class="help-text" id="weekly-goal-retry" role="status">{% if goal_retry_seconds %}재시도까지 {{ goal_retry_seconds }}초 남았습니다. 시간이 지나면 버튼이 활성화됩니다.{% endif %}</p><p id="weekly-goal-loading" class="help-text" role="status" hidden>나에게 맞는 이번 주 목표를 만들고 있어요. 잠시만 기다려 주세요.</p></form>{% endif %}
-<div class="form-actions"><a class="button" href="{% url 'profile_update' %}#exercise-habits">프로필·운동 습관 확인</a><a class="button" href="{% url 'meal_plan' %}">음식 선호·제한 확인</a></div>
+{% else %}<form method="post" id="weekly-goal-form">{% csrf_token %}<p class="help-text">버튼을 누르면 필요한 프로필과 최근 기록, 저장된 음식 선호·제한 조건을 Gemini에 보내 목표를 생성합니다. 처음이면 프로필의 운동 습관과 위 음식 조건의 알레르기·제한 사항을 먼저 확인해 주세요. 일주일 계획을 한 번에 만들기 때문에 잠시 시간이 걸릴 수 있습니다.</p><button id="weekly-goal-submit" class="button button-primary" type="submit" data-retry-seconds="{{ goal_retry_seconds }}" data-profile-ready="{{ profile_ready|yesno:'true,false' }}" {% if not profile_ready or goal_retry_seconds %}disabled{% endif %}>{% if goal_retry_seconds %}{{ goal_retry_seconds }}초 후 다시 시도{% else %}✨ AI로 이번 주 목표 받기{% endif %}</button><p class="help-text" id="weekly-goal-retry" role="status">{% if goal_retry_seconds %}재시도까지 {{ goal_retry_seconds }}초 남았습니다. 시간이 지나면 버튼이 활성화됩니다.{% endif %}</p><p id="weekly-goal-loading" class="help-text" role="status" hidden>나에게 맞는 이번 주 목표를 만들고 있어요. 잠시만 기다려 주세요.</p></form>{% endif %}
+<div class="form-actions"><a class="button" href="{% url 'profile_update' %}#exercise-habits">프로필·운동 습관 확인</a><a class="button" href="#food-options">음식 선호·제한 확인</a></div>
 <p class="help-text">한 주의 목표는 저장해 다시 사용하고 다음 주에는 새로 제안받습니다. 목표 체중을 바꾸면 새 목표를 받을 수 있습니다. 이전 계획과 실제 기록은 보존됩니다.</p>
 </section>
 {% if goal_plan %}
@@ -81,8 +91,37 @@
 <p class="help-text">미기록·미분석은 비교 불가이며 현재 게이지에 기여하지 않습니다. 실제로 식사나 운동을 하지 않았다는 뜻도, 영양 결핍이라는 뜻도 아닙니다. 추가 섭취나 과도한 운동으로 100%를 넘겨 채울 수 없습니다.</p>
 </section>
 {% endif %}
+<section class="card goal-section" id="nutrition" aria-labelledby="nutrition-heading">
+    <h2 id="nutrition-heading">영양 기록 기반 보완 안내</h2>
+    {% if advice_error %}<p class="errorlist" role="alert">{{ advice_error }}</p>{% endif %}
+    <p class="plan-summary">{{ nutrition_summary.start_date }} ~ {{ nutrition_summary.end_date }} · 식사 {{ nutrition_summary.meal_count }}건 · 기록한 날짜 {{ nutrition_summary.recorded_days }}일</p>
+    <div class="weight-table-wrap"><table class="weight-table">
+        <thead><tr><th>항목</th><th>알려진 값의 합계</th><th>분석된 식사</th><th>미분석 식사</th></tr></thead>
+        <tbody>{% for nutrient in nutrition_summary.nutrients %}<tr><td>{{ nutrient.label }}</td><td>{% if nutrient.total != None %}{{ nutrient.total }} {{ nutrient.unit }}{% else %}미분석{% endif %}</td><td>{{ nutrient.known_count }}건</td><td>{{ nutrient.missing_count }}건</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% for message in nutrition_summary.messages %}<p class="help-text">{{ message }}</p>{% endfor %}
+    <p class="help-text">위의 선호 음식·알레르기·제한 조건도 함께 반영합니다. 버튼을 누를 때만 Gemini에 기록을 전송합니다.</p>
+    <button class="button button-primary" type="submit" form="food-options-form" name="action" value="nutrition_advice" data-ai-submit {% if not nutrition_summary.meal_count %}disabled{% endif %}>AI 영양 보완 안내{% if nutrition_advice %} 다시{% endif %} 받기</button>
+    {% if advice_stale %}<p class="form-note" role="status">날짜·기록·프로필·식사 조건이 변경되었습니다. 현재 정보로 보완 안내를 다시 받아 주세요.</p>{% endif %}
+    {% if nutrition_advice %}
+    <p class="plan-summary">{{ nutrition_advice.summary }}</p>
+    {% for item in nutrition_advice.items %}
+    <div class="form-note"><strong>{{ item.nutrient }}</strong><p><strong>기록에서 확인한 점:</strong> {{ item.observation }}</p><p><strong>보완 방법:</strong> {{ item.suggestion }}</p></div>
+    {% endfor %}
+    <ul class="help-text">{% for caution in nutrition_advice.cautions %}<li>{{ caution }}</li>{% endfor %}</ul>
+    {% endif %}
+    <p class="help-text">일부 기록만으로 실제 영양 결핍을 진단할 수 없습니다. 식이섬유·비타민·미네랄은 현재 저장 항목에 없어 부족 여부를 평가하지 않습니다.</p>
+</section>
 <p class="form-note">AI 식단과 영양 값은 추정치이며 개인별 처방이 아닙니다. 기록 합계로 실제 영양 결핍을 단정하지 않습니다. 알레르기는 재료·성분표를 확인하고, 운동은 통증이나 불편함이 있으면 멈추고 본인 상태에 맞게 조정하세요.</p>
 <script>
+    document.getElementById('food-options-form').addEventListener('submit', event => {
+        const action = event.submitter ? event.submitter.value : 'save_food_options';
+        document.getElementById('food-options-action').value = action;
+        if (action === 'nutrition_advice') {
+            document.querySelectorAll('[data-ai-submit]').forEach(button => { button.disabled = true; });
+            document.getElementById('food-options-status').textContent = '영양 보완 안내를 생성하고 있습니다. 잠시 기다려 주세요.';
+        }
+    });
     (() => {
         const form = document.getElementById('weekly-goal-form');
         const button = document.getElementById('weekly-goal-submit');

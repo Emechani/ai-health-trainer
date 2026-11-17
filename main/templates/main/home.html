@@ -912,7 +912,7 @@
                 <h3 id="nutrition-preview-heading">🥗 영양 기록과 식단 보완</h3>
                 <p>최근 7일 식사 {{ nutrition_summary.meal_count }}건 · 기록한 날짜 {{ nutrition_summary.recorded_days }}일 · 영양 분석 완료 {{ nutrition_summary.complete_count }}건</p>
                 {% for message in nutrition_summary.messages %}<p class="notice-caption">{{ message }}</p>{% endfor %}
-                <a href="{% url 'meal_plan' %}#nutrition" class="btn-profile notice-link">기록된 영양소와 보완 안내 보기 →</a>
+                <a href="{% url 'goal_progress' %}#nutrition" class="btn-profile notice-link">기록된 영양소와 보완 안내 보기 →</a>
             </section>
 
             <!-- 주간 활동 요약 -->
@@ -1147,7 +1147,7 @@
             {% endif %}
 
             <div class="record-actions">
-                <a href="{% url 'meal_plan' %}" class="btn-add">🥗 목표 기반 맞춤 식단</a>
+                <a href="{% url 'goal_progress' %}" class="btn-add">🎯 이번 주 목표와 식단</a>
                 <a href="{% url 'today_record' %}" class="btn-add">
                     🏃 운동 기록 추가하기
                 </a>

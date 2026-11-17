@@ -17,7 +17,7 @@
 {% block main_content %}
 <header class="header-wrapper">
     <div class="header"><h1>{% if saved_plan %}보관된 맞춤 식단{% else %}맞춤 식단 보관함{% endif %}</h1><p>생성 당시의 식단과 식사 조건을 날짜별로 확인하세요.</p></div>
-    <a class="button back-link" href="{% url 'meal_plan' %}">← 맞춤 식단으로</a>
+    <a class="button back-link" href="{% url 'goal_progress' %}">← 목표 실천으로</a>
 </header>
 {% if saved_plan %}
 <section class="card">
