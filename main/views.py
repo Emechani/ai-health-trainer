@@ -25,7 +25,8 @@ from .google_auth import CALENDAR_SCOPE, calendar_credentials, FITNESS_SCOPE, SC
 from googleapiclient.discovery import build
 
 from users.models import UserProfile, current_weight_day
-from records.models import DailyRecord, Meal, Exercise
+from records.models import DailyRecord, Meal, Exercise, GoalPlan
+from records.goal_progress import goal_progress_data
 from records.nutrition import nutrition_summary
 
 import time
@@ -294,7 +295,17 @@ def home(request):
     auto_google_auth = (needs_google_auth and request.method == 'GET'
                         and not request.session.get('google_fit_auto_attempted'))
     reminder_day = current_weight_day()
+    # 이미 생성된 이번 주·현재 목표의 계획만 조회하며 홈에서는 AI를 호출하지 않습니다.
+    goal_week_start = reminder_day - datetime.timedelta(days=reminder_day.weekday())
+    home_goal_plan = GoalPlan.objects.filter(
+        user=request.user, start_date=goal_week_start,
+        end_date=goal_week_start + datetime.timedelta(days=6),
+        target_weight=profile.target_weight, meal_snapshot__schedule_version=2,
+    ).first() if profile.target_weight is not None else None
+    home_today_plan = goal_progress_data(home_goal_plan, reminder_day)['today_plan'] if home_goal_plan else None
     context = {
+        'home_goal_plan': home_goal_plan,
+        'home_today_plan': home_today_plan,
         'activity_provider_label': provider_label,
         'calendar_connected': calendar_connected,
         'google_health_error': google_health_error,
@@ -303,7 +314,7 @@ def home(request):
         'google_oauth_notice': request.session.pop('google_oauth_notice', ''),
         'today': today,
         'reminder_day': reminder_day,
-        'needs_exercise_record': not Exercise.objects.filter(daily_record__user=request.user, daily_record__date=reminder_day).exists(),
+        'needs_exercise_record': (not home_today_plan or not home_today_plan['rest']) and not Exercise.objects.filter(daily_record__user=request.user, daily_record__date=reminder_day).exists(),
         'needs_meal_record': not Meal.objects.filter(daily_record__user=request.user, daily_record__date=reminder_day).exists(),
         'nutrition_summary': nutrition_summary(request.user, reminder_day),
         'profile': profile, 

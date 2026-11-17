@@ -620,6 +620,12 @@
         .notice-link { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 9px 14px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: 600; line-height: 1.5; }
         .nutrition-preview .notice-link { margin-top: 8px; }
         .nutrition-preview .notice-caption + .notice-caption { margin-top: 6px; }
+        .today-plan-card { border: 1px solid #b9dfc1; background: #f5fbf7; }
+        .today-plan-meals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+        .today-plan-meals > div { min-width: 0; overflow-wrap: anywhere; }
+        .today-plan-meals h4 { margin: 0 0 8px; font-size: 14px; }
+        .today-plan-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+        @media (max-width: 760px) { .today-plan-meals { grid-template-columns: 1fr; } }
         @media (min-width: 1101px) {
             .stat-card { flex-direction: row; align-items: center; padding: 20px; gap: 14px; }
         }
@@ -829,6 +835,29 @@
                     </form>
                 </div>
             </div>
+
+            {% if home_today_plan %}
+            <section class="activity-card notice-card today-plan-card" aria-labelledby="home-today-plan-heading">
+                <h3 id="home-today-plan-heading">☀️ 오늘 할 일 · {{ home_today_plan.date|date:'m/d (D)' }}</h3>
+                <p><strong>{{ home_today_plan.action }}</strong></p>
+                {% if home_today_plan.rest %}
+                <p>🛌 오늘은 휴식일입니다. 운동으로 게이지를 채울 필요가 없어요.</p>
+                {% else %}
+                <p>🏃 {{ home_today_plan.exercise_name }} {{ home_today_plan.target_minutes }}분 · 기록 {{ home_today_plan.minutes }}분{% if home_today_plan.remaining_minutes %} · 목표까지 {{ home_today_plan.remaining_minutes }}분{% else %} · 목표 시간 기록 완료{% endif %}</p>
+                {% endif %}
+                <div class="today-plan-meals">
+                    {% for meal in home_today_plan.planned_meals %}
+                    <div><h4>{{ meal.label }}</h4><p>{{ meal.food_name }}</p><p class="notice-caption">{{ meal.portion }}</p></div>
+                    {% endfor %}
+                </div>
+                <p class="notice-caption">하루 식단 예시 {{ home_today_plan.totals.calories }} kcal · 영양 값은 AI 추정치이며 개인별 처방이 아닙니다.</p>
+                <div class="today-plan-actions">
+                    {% if not home_today_plan.rest %}<a class="btn-profile notice-link" href="{% url 'today_record' %}?date={{ home_today_plan.date|date:'Y-m-d' }}">운동 기록하기 →</a>{% endif %}
+                    <a class="btn-profile notice-link" href="{% url 'meal_record' %}?date={{ home_today_plan.date|date:'Y-m-d' }}">식사 기록하기 →</a>
+                    <a class="btn-profile notice-link" href="{% url 'goal_progress' %}?plan={{ home_goal_plan.pk }}">이번 주 계획 보기 →</a>
+                </div>
+            </section>
+            {% endif %}
 
             {% if needs_exercise_record or needs_meal_record %}
             <section class="activity-card notice-card" aria-labelledby="daily-reminder-heading">
