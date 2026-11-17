@@ -666,7 +666,7 @@
         {% include 'includes/sidebar.html' %}
 
         <!-- 2. 중앙 달력 영역 -->
-        <main class="main-content"><header class="header-wrapper"><div class="header"><span class="stitch-eyebrow">INDEX 02 / CALENDAR &amp; COACHING</span><h1>달력 · AI 트레이너</h1><p>나의 일정과 건강 기록을 함께 확인하세요.</p></div></header>
+        <main class="main-content"><a class="mobile-only mobile-action mobile-coach-link" href="{% url 'exercise_calendar' %}?chat=1">AI 트레이너에게 질문하기 →</a><header class="header-wrapper"><div class="header"><span class="stitch-eyebrow">INDEX 02 / CALENDAR &amp; COACHING</span><h1>달력 · AI 트레이너</h1><p>나의 일정과 건강 기록을 함께 확인하세요.</p></div></header>
             <div class="cal-inner-box">
 
                 <div class="cal-header">
@@ -769,6 +769,7 @@
 
         <!-- 3. 오른쪽 AI 트레이너 -->
         <aside class="chat-section" id="ai-trainer">
+            <a class="mobile-only mobile-chat-back" href="{% url 'exercise_calendar' %}">← 달력으로</a>
 
             <span class="stitch-eyebrow">COACHING / 오늘의 대화</span><h3>AI 트레이너</h3>
 

@@ -1,0 +1,16 @@
+{% load static %}
+<nav class="mobile-nav" aria-label="모바일 주 메뉴">
+{% with current=request.resolver_match.url_name %}
+<a href="{% url 'home' %}" {% if current == 'home' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#home"></use></svg>홈</a>
+<a href="{% url 'exercise_calendar' %}" {% if current == 'exercise_calendar' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#calendar"></use></svg>달력</a>
+<a href="{% url 'goal_progress' %}" {% if current == 'goal_progress' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#target"></use></svg>목표 실천</a>
+<button type="button" id="mobile-record-open" aria-haspopup="dialog" {% if current == 'today_record' or current == 'meal_record' or current == 'exercise_edit' or current == 'meal_edit' %}class="is-active"{% endif %}><svg aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#exercise"></use></svg>기록</button>
+<a href="{% url 'profile_update' %}" {% if current == 'profile_update' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#settings"></use></svg>내 정보</a>
+{% endwith %}
+</nav>
+<dialog id="mobile-record-sheet" aria-labelledby="mobile-record-title">
+<div class="mobile-sheet-heading"><h2 id="mobile-record-title">기록하기</h2><button type="button" id="mobile-record-close" aria-label="기록 선택 닫기">✕</button></div>
+<p>오늘 기록할 활동을 선택해 주세요.</p>
+<a href="{% url 'today_record' %}" class="mobile-action">운동 기록하기 <span aria-hidden="true">→</span></a>
+<a href="{% url 'meal_record' %}" class="mobile-action">식사 기록하기 <span aria-hidden="true">→</span></a>
+</dialog>

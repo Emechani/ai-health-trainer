@@ -40,3 +40,5 @@
     <a href="{% url 'meal_record' %}" title="식사 기록" aria-label="식사 기록" {% if request.resolver_match.url_name == 'meal_record' or request.resolver_match.url_name == 'meal_edit' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#meal"></use></svg></a>
     <a href="{% url 'profile_update' %}" title="프로필 설정" aria-label="프로필 설정" {% if request.resolver_match.url_name == 'profile_update' or request.resolver_match.url_name == 'profile_setup' or request.resolver_match.url_name == 'password_change' or request.resolver_match.url_name == 'password_change_done' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#settings"></use></svg></a>
 </nav>
+
+{% include 'includes/mobile_navigation.html' %}

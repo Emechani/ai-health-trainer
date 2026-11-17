@@ -1,0 +1,69 @@
+/* 모바일 전용 구성: PC 테마와 기존 폼·데이터를 재사용합니다. */
+.mobile-only, .mobile-nav { display: none !important; }
+#mobile-record-sheet { border: 1px solid #dfe5eb; border-radius: 24px 24px 0 0; padding: 24px; color: #172538; background: #fff; }
+#mobile-record-sheet::backdrop { background: rgb(16 32 48 / .45); }
+.mobile-action { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 12px 16px; border-radius: 12px; border: 1px solid #dfe5eb; background: #edf5ef; color: #176447; font-weight: 700; text-decoration: none; }
+.mobile-sheet-heading { display: flex; align-items: center; justify-content: space-between; }
+.mobile-sheet-heading h2 { margin: 0; }
+.mobile-sheet-heading button { min-width: 44px; min-height: 44px; border: 0; background: transparent; font-size: 20px; }
+#mobile-record-sheet .mobile-action { margin-top: 16px; }
+@media (max-width: 760px) {
+    html { scroll-padding-bottom: 100px; }
+    body.stitch-app { --canvas: #f8f9ff; --green: #006c49; padding: 0 0 calc(82px + env(safe-area-inset-bottom)) !important; overflow-x: clip; }
+    .stitch-app .mobile-only { display: block !important; }
+    .stitch-app .sidebar { display: none !important; }
+    .stitch-app .stitch-topbar { position: relative; inset: auto; min-height: 60px; background: #fff; padding: 12px 16px; }
+    .stitch-app .stitch-header-actions form, .stitch-app .stitch-eyebrow { display: none; }
+    .stitch-app .stitch-wordmark { font-size: 14px; letter-spacing: -.02em; }
+    .stitch-app .app-container { min-height: 0; border-radius: 0; padding: 0; }
+    .stitch-app .main-content, .stitch-app.page-home .main-content, .stitch-app.page-calendar .main-content { padding: 20px 16px; }
+    .stitch-app .header-wrapper { margin-bottom: 20px; padding-bottom: 0; border: 0; }
+    .stitch-app :is(h1, .header h2) { font-size: 24px; line-height: 1.4; }
+    .stitch-app :is(.card, .activity-card, .dark-card) { border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+    .stitch-app :is(.button, .btn-profile, .btn-add, .btn-ai, .btn-logout) { min-height: 44px; border-radius: 12px; }
+    .stitch-app :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select, textarea) { max-width: 100%; min-width: 0; font-size: 16px !important; min-height: 48px; border-radius: 12px !important; }
+    .stitch-app input[type=file] { width: 100%; font-size: 13px !important; }
+    .stitch-app .form-actions { flex-wrap: wrap; }
+    .stitch-app .mobile-nav { position: fixed; inset: auto 0 0; z-index: 100; display: grid !important; grid-template-columns: repeat(5,minmax(0,1fr)); background: #fff; border-top: 1px solid var(--line); padding: 8px 4px calc(8px + env(safe-area-inset-bottom)); }
+    .mobile-nav :is(a,button) { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50px; gap: 4px; border: 0; background: transparent; color: #697586; font-size: 11px; text-decoration: none; padding: 0; cursor: pointer; }
+    .mobile-nav svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .mobile-nav :is([aria-current=page],.is-active) { color: #006c49; font-weight: 800; }
+    #mobile-record-sheet { position: fixed; inset: auto 0 0; margin: 0; width: 100%; max-width: 100%; max-height: 80dvh; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+    .stitch-app .mobile-quick-actions { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .stitch-app .mobile-action { display: flex !important; }
+    .mobile-quick-actions .mobile-action { background: #172538; color: #fff; justify-content: center; }
+    .mobile-coach-link { margin-bottom: 16px; }
+    .stitch-app .mobile-fold { border: 1px solid var(--line); border-radius: 16px; background: #fff; margin: 16px 0; overflow: hidden; min-width: 0; }
+    .mobile-fold > summary { padding: 16px; min-height: 52px; font-weight: 700; cursor: pointer; }
+    .mobile-fold > :not(summary) { margin: 0; border: 0; border-radius: 0; }
+    .mobile-fold > .mobile-fold-content { padding: 0 16px 16px; }
+    .stitch-app.page-home .auth-buttons, .stitch-app.page-home .right-panel > :is(.stitch-eyebrow,h2), .stitch-app.page-home .record-actions { display: none; }
+    .stitch-app.page-home .right-panel { padding: 0 16px; border: 0; background: transparent; }
+    .stitch-app.page-home .today-plan-meals { gap: 8px; margin: 12px 0; }
+    .stitch-app.page-home .today-plan-meals > div { display: grid; grid-template-columns: 42px minmax(0,1fr); column-gap: 8px; padding: 10px !important; border: 0 !important; border-radius: 10px; background: #eff4f8; }
+    .stitch-app.page-home .today-plan-meals :is(h4,p) { margin: 0; }
+    .stitch-app.page-home .today-plan-meals .notice-caption { grid-column: 2; }
+    .stitch-app.page-home .summary-cards { margin: 16px 0; }
+    .mobile-steps-sync { margin-top: 12px; }
+    .mobile-steps-sync .btn-ai { width: 100%; }
+    .mobile-fold .weight-table-wrap { max-width: 100%; }
+    .stitch-app.page-goals .goal-today .goal-grid { gap: 8px; }
+    .stitch-app.page-goals .goal-today .goal-grid > div { border-radius: 12px; padding: 10px 12px; background: #fff; }
+    .stitch-app.page-goals .goal-today h3 { font-size: 14px; margin: 0; }
+    .stitch-app.page-goals .goal-today .goal-grid p { margin: 4px 0; }
+    .stitch-app.page-profile .profile-panel { order: -1; }
+    .stitch-app.page-profile .profile-panel :is(.eyebrow,.avatar,.panel-note) { display: none; }
+    .stitch-app.page-profile .profile-layout { gap: 0; }
+    .stitch-app.page-calendar:not(.mobile-chat-open) .chat-section { display: none; }
+    .stitch-app.page-calendar.mobile-chat-open .main-content { display: none; }
+    .stitch-app.page-calendar.mobile-chat-open .chat-section { display: flex; flex-direction: column; min-height: calc(100dvh - 150px); background: var(--canvas); border: 0; padding: 16px; overflow: visible; }
+    .stitch-app.page-calendar.mobile-chat-open .chat-box { height: auto; max-height: none; flex: 1 0 auto; overflow: visible; padding: 10px 0; background: transparent; }
+    .stitch-app .chat-msg { max-width: 94%; font-size: 14px; overflow-wrap: anywhere; }
+    .stitch-app.page-calendar.mobile-chat-open .chat-input-area { position: sticky; bottom: calc(72px + env(safe-area-inset-bottom)); padding: 10px 0; background: var(--canvas); margin-top: 12px; }
+    .mobile-chat-back { min-height: 44px; font-weight: 700; text-decoration: none; }
+    .stitch-app.page-home .record-reminder p { display: block; }
+    .stitch-app.page-home .record-reminder p strong { color: #344457 !important; font-size: 13px; white-space: normal; }
+    .stitch-app .record-list li { min-width: 0; flex-wrap: wrap; }
+    .stitch-app .record-list li > div { min-width: 0; overflow-wrap: anywhere; }
+    .stitch-app .record-list .action-links { width: 100%; }
+}

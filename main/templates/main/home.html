@@ -867,7 +867,11 @@
                     <a class="btn-profile notice-link" href="{% url 'goal_progress' %}?plan={{ home_goal_plan.pk }}">이번 주 계획 보기 →</a>
                 </div>
             </section>
+            {% else %}
+            <section class="mobile-only activity-card mobile-empty-plan"><h3>오늘 할 일</h3><p>아직 생성한 이번 주 계획이 없어요.</p><a class="mobile-action" href="{% url 'goal_progress' %}">이번 주 목표 만들기 →</a></section>
             {% endif %}
+            <div class="mobile-only mobile-quick-actions"><a class="mobile-action" href="{% url 'today_record' %}">운동 기록</a><a class="mobile-action" href="{% url 'meal_record' %}">식사 기록</a></div>
+            <a class="mobile-only mobile-action mobile-coach-link" href="{% url 'exercise_calendar' %}?chat=1">AI 트레이너에게 질문하기 →</a>
 
             <!-- 요약 카드 3개 -->
             <div class="summary-cards">
