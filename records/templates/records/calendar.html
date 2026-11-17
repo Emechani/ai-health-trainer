@@ -1,4 +1,5 @@
 
+{% load static %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -469,6 +470,25 @@
             color: #fff;
         }
 
+        .chat-content { white-space: pre-wrap; }
+        .chat-markdown { white-space: normal; line-height: 1.8; overflow-wrap: anywhere; min-width: 0; }
+        .chat-markdown p { margin: 0 0 12px; }
+        .chat-markdown > :first-child { margin-top: 0; }
+        .chat-markdown > :last-child { margin-bottom: 0; }
+        .chat-markdown h3, .chat-markdown h4, .chat-markdown h5, .chat-markdown h6 { color: inherit; font-size: 1.05em; margin: 18px 0 8px; padding: 0; border: 0; line-height: 1.6; }
+        .chat-markdown ul, .chat-markdown ol { margin: 8px 0 14px; padding-left: 24px; }
+        .chat-markdown li { margin: 5px 0; }
+        .chat-markdown strong { font-weight: 700; }
+        .chat-markdown code { font-size: .9em; background: rgba(255,255,255,.08); padding: 2px 5px; border-radius: 5px; }
+        .chat-markdown pre { white-space: pre; overflow-x: auto; max-width: 100%; background: #22252a; padding: 12px; border-radius: 10px; }
+        .chat-markdown pre code { padding: 0; background: none; }
+        .chat-markdown blockquote { border-left: 3px solid #81c784; margin: 12px 0; padding-left: 12px; color: #d7e5da; }
+        .chat-markdown hr { border: 0; border-top: 1px solid #5d6269; margin: 16px 0; }
+        .chat-table-wrap { max-width: 100%; overflow-x: auto; margin: 12px 0; }
+        .chat-markdown table { border-collapse: collapse; font-size: .9em; min-width: 100%; }
+        .chat-markdown th, .chat-markdown td { border: 1px solid #5d6269; padding: 8px; vertical-align: top; text-align: left; }
+        .chat-markdown th { background: rgba(255,255,255,.07); }
+
         .mobile-day-button, .mobile-day-agenda, .trainer-shortcut { display: none; }
 
         /* ========================================
@@ -635,16 +655,18 @@
             .agenda-item.tag-event { color: #594500; background: #fff4cd; }
         }
     </style>
+    {% include 'includes/stitch_assets.html' %}
 </head>
 
-<body>
+<body class="stitch-app page-calendar">
+    {% include 'includes/app_header.html' %}
     <div class="app-container">
 
         <!-- 1. 왼쪽 사이드바 -->
         {% include 'includes/sidebar.html' %}
 
         <!-- 2. 중앙 달력 영역 -->
-        <main class="main-content">
+        <main class="main-content"><header class="header-wrapper"><div class="header"><span class="stitch-eyebrow">INDEX 02 / CALENDAR &amp; COACHING</span><h1>달력 · AI 트레이너</h1><p>나의 일정과 건강 기록을 함께 확인하세요.</p></div></header>
             <div class="cal-inner-box">
 
                 <div class="cal-header">
@@ -748,7 +770,7 @@
         <!-- 3. 오른쪽 AI 트레이너 -->
         <aside class="chat-section" id="ai-trainer">
 
-            <h3>🤖 AI 트레이너</h3>
+            <span class="stitch-eyebrow">COACHING / 오늘의 대화</span><h3>AI 트레이너</h3>
 
             <p>식단/운동에 대해 질문해보세요!</p>
 
@@ -773,12 +795,12 @@
                     {% if chat.is_ai %}
                     <div class="chat-msg chat-ai">
                         <strong>🤖 AI 트레이너:</strong><br>
-                        {{ chat.message|linebreaksbr }}
+                        <div class="chat-content" data-ai-markdown>{{ chat.message }}</div>
                     </div>
                     {% else %}
                     <div class="chat-msg chat-user">
                         <strong>나:</strong><br>
-                        {{ chat.message|linebreaksbr }}
+                        <div class="chat-content">{{ chat.message }}</div>
                     </div>
                     {% endif %}
 
@@ -804,6 +826,7 @@
 
     </div>
 
+    <script src="{% static 'records/chat_markdown.js' %}"></script>
     <!-- 4. AI 채팅 JavaScript -->
     <script>
         // 모바일에서는 좁은 날짜 칸 대신 선택한 날짜의 내용을 별도 목록으로 표시합니다.
@@ -855,8 +878,11 @@
             senderElement.textContent = sender + ':';
 
             const contentElement = document.createElement('div');
-            contentElement.style.whiteSpace = 'pre-wrap';
+            contentElement.className = 'chat-content';
             contentElement.textContent = message;
+            if (type === 'chat-ai' && window.renderChatMarkdown) {
+                window.renderChatMarkdown(contentElement, message);
+            }
 
             messageElement.appendChild(senderElement);
             messageElement.appendChild(document.createElement('br'));

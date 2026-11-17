@@ -1,4 +1,5 @@
 {% extends 'users/profile_update.html' %}
+{% block app_page_class %}page-meal-plan{% endblock %}
 {% block page_title %}목표 기반 맞춤 식단 · Health Overview{% endblock %}
 {% block extra_styles %}
     .meal-plan-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
@@ -13,7 +14,7 @@
 {% endblock %}
 {% block main_content %}
 <header class="header-wrapper">
-    <div class="header"><h1>목표 기반 맞춤 식단</h1><p>{{ plan_date|date:'Y년 m월 d일' }} · 실제 목표와 최근 기록을 참고한 하루 식단 예시입니다.</p></div>
+    <div class="header"><span class="stitch-eyebrow">INDEX 06 / NUTRITION CURATION</span><h1>목표 기반 맞춤 식단</h1><p>{{ plan_date|date:'Y년 m월 d일' }} · 실제 목표와 최근 기록을 참고한 하루 식단 예시입니다.</p></div>
     <div class="form-actions"><a href="{% url 'meal_plan_history' %}" class="button">📚 식단 보관함</a><a href="{% url 'home' %}" class="button back-link">← 홈으로</a></div>
 </header>
 <section class="card" aria-labelledby="plan-settings-heading">

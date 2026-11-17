@@ -1,3 +1,4 @@
+{% load static %}
 <style>
     /* 모바일에서는 모든 기록 화면에 동일한 상단 메뉴와 문서 스크롤을 적용합니다. */
     @media (max-width: 760px) {
@@ -31,12 +32,12 @@
     }
 </style>
 <nav class="sidebar" aria-label="주 메뉴" style="overflow: auto;">
-    <div class="logo" aria-hidden="true">💪</div>
-    <a href="{% url 'home' %}" title="홈" aria-label="홈" {% if request.resolver_match.url_name == 'home' %}class="active" aria-current="page"{% endif %}><span>🏠</span></a>
-    <a href="{% url 'exercise_calendar' %}" title="달력보기" aria-label="달력보기" {% if request.resolver_match.url_name == 'exercise_calendar' %}class="active" aria-current="page"{% endif %}><span>📅</span></a>
-    <a href="{% url 'goal_progress' %}" title="목표 실천" aria-label="목표 실천" {% if request.resolver_match.url_name == 'goal_progress' %}class="active" aria-current="page"{% endif %}><span>🎯</span></a>
-    <a href="{% url 'today_record' %}" title="운동 기록" aria-label="운동 기록" {% if request.resolver_match.url_name == 'today_record' or request.resolver_match.url_name == 'exercise_edit' %}class="active" aria-current="page"{% endif %}><span>🏃</span></a>
-    <a href="{% url 'meal_record' %}" title="식사 기록" aria-label="식사 기록" {% if request.resolver_match.url_name == 'meal_record' or request.resolver_match.url_name == 'meal_edit' %}class="active" aria-current="page"{% endif %}><span>🍽️</span></a>
-    <a href="{% url 'meal_plan' %}" title="맞춤 식단" aria-label="맞춤 식단" {% if request.resolver_match.url_name == 'meal_plan' %}class="active" aria-current="page"{% endif %}><span>🥗</span></a>
-    <a href="{% url 'profile_update' %}" title="프로필 설정" aria-label="프로필 설정" {% if request.resolver_match.url_name == 'profile_update' or request.resolver_match.url_name == 'profile_setup' or request.resolver_match.url_name == 'password_change' or request.resolver_match.url_name == 'password_change_done' %}class="active" aria-current="page"{% endif %}><span>⚙️</span></a>
+    <div class="logo" aria-label="Health Overview">HO</div>
+    <a href="{% url 'home' %}" title="홈" aria-label="홈" {% if request.resolver_match.url_name == 'home' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#home"></use></svg></a>
+    <a href="{% url 'exercise_calendar' %}" title="달력보기" aria-label="달력보기" {% if request.resolver_match.url_name == 'exercise_calendar' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#calendar"></use></svg></a>
+    <a href="{% url 'goal_progress' %}" title="목표 실천" aria-label="목표 실천" {% if request.resolver_match.url_name == 'goal_progress' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#target"></use></svg></a>
+    <a href="{% url 'today_record' %}" title="운동 기록" aria-label="운동 기록" {% if request.resolver_match.url_name == 'today_record' or request.resolver_match.url_name == 'exercise_edit' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#exercise"></use></svg></a>
+    <a href="{% url 'meal_record' %}" title="식사 기록" aria-label="식사 기록" {% if request.resolver_match.url_name == 'meal_record' or request.resolver_match.url_name == 'meal_edit' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#meal"></use></svg></a>
+    <a href="{% url 'meal_plan' %}" title="맞춤 식단" aria-label="맞춤 식단" {% if request.resolver_match.url_name == 'meal_plan' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#nutrition"></use></svg></a>
+    <a href="{% url 'profile_update' %}" title="프로필 설정" aria-label="프로필 설정" {% if request.resolver_match.url_name == 'profile_update' or request.resolver_match.url_name == 'profile_setup' or request.resolver_match.url_name == 'password_change' or request.resolver_match.url_name == 'password_change_done' %}class="active" aria-current="page"{% endif %}><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><use href="{% static 'main/stitch_icons.svg' %}#settings"></use></svg></a>
 </nav>

@@ -314,22 +314,29 @@
             .list-card .record-list { flex: 0 0 auto; max-height: none; overflow: visible; scrollbar-gutter: auto; }
         }
     </style>
+    {% include 'includes/stitch_assets.html' %}
 </head>
-<body>
+<body class="stitch-app {% if record_type == "meal" %}page-meals{% else %}page-exercise{% endif %}">
+    {% include 'includes/app_header.html' %}
     <div class="app-container">
         <!-- 사이드바 -->
         {% include 'includes/sidebar.html' %}
 
         <!-- 메인 컨텐츠 -->
         <main class="main-content">
-            <div class="header">
-                <h2>{% if record_type == "meal" %}🍽️{% else %}🏃{% endif %} {{ date|date:"Y년 m월 d일" }} {% if record_type == "meal" %}식사 기록{% else %}운동 기록{% endif %}</h2>
-            </div>
+            <header class="header-wrapper">
+                <div class="header">
+                    <span class="stitch-eyebrow">{% if record_type == "meal" %}INDEX 05 / MEAL &amp; NUTRITION{% else %}INDEX 04 / EXERCISE &amp; VOLUME{% endif %}</span>
+                    <h1>{% if record_type == "meal" %}식사 기록{% else %}운동 기록{% endif %}</h1>
+                    <p>{{ date|date:"Y년 m월 d일" }} · 오늘의 기록을 남기고 변화를 확인하세요.</p>
+                </div>
+                <a class="button" href="{% url 'home' %}">홈으로</a>
+            </header>
 
             <div class="forms-container">
                 {% if record_type != 'meal' %}
                 <!-- 운동 기록 카드 -->
-                <section class="card input-card" aria-labelledby="exercise-form-heading">
+                <section class="card input-card" aria-labelledby="exercise-form-heading"><span class="stitch-eyebrow">01 / WORKOUT ENTRY</span>
                     <h3 id="exercise-form-heading" style="color: #1976d2;">🏃‍♂️ 운동 기록</h3>
                     <form method="POST">
                         {% csrf_token %}
@@ -338,7 +345,7 @@
                     </form>
                 </section>
 
-                <section class="card list-card" aria-labelledby="exercise-list-heading">
+                <section class="card list-card" aria-labelledby="exercise-list-heading"><span class="stitch-eyebrow">02 / SESSION LOGS</span>
                     <h3 id="exercise-list-heading" style="color: #1976d2;">📋 운동 기록 목록</h3>
                     <ul class="record-list" tabindex="0" aria-label="운동 기록 목록">
                         {% for exercise in exercises %}
@@ -367,7 +374,7 @@
 
                 {% else %}
                 <!-- 식사 기록 카드 -->
-                <section class="card input-card" aria-labelledby="meal-form-heading">
+                <section class="card input-card" aria-labelledby="meal-form-heading"><span class="stitch-eyebrow">01 / MEAL ENTRY</span>
                     <h3 id="meal-form-heading" style="color: #4CAF50;">🍳 식사 기록</h3>
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
@@ -380,7 +387,7 @@
                     </form>
                 </section>
 
-                <section class="card list-card" aria-labelledby="meal-list-heading">
+                <section class="card list-card" aria-labelledby="meal-list-heading"><span class="stitch-eyebrow">02 / NUTRITION LOGS</span>
                     <h3 id="meal-list-heading" style="color: #4CAF50;">📋 식사 기록 목록</h3>
                     <ul class="record-list" tabindex="0" aria-label="식사 기록 목록">
                         {% for meal in meals %}

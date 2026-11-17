@@ -808,9 +808,11 @@
         }
         .steps-detail { margin-top: 5px; font-size: 11px; line-height: 1.45; color: #75838d; overflow-wrap: anywhere; }
     </style>
+    {% include 'includes/stitch_assets.html' %}
 </head>
 
-<body>
+<body class="stitch-app page-home">
+    {% include 'includes/app_header.html' %}
     <div class="app-container">
 
         <!-- 1. 왼쪽 사이드바 -->
@@ -822,7 +824,7 @@
             <!-- 헤더 및 인증 버튼 -->
             <div class="header-wrapper">
                 <div class="header">
-                    <h1>Health Overview</h1>
+                    <span class="stitch-eyebrow">INDEX 01 / DAILY HEALTH BRIEF</span><h1>Health Overview</h1>
                     <p>{{ today|date:"Y년 m월 d일 l" }}</p>
                 </div>
 
@@ -846,7 +848,7 @@
 
             {% if home_today_plan %}
             <section class="activity-card notice-card today-plan-card" aria-labelledby="home-today-plan-heading">
-                <h3 id="home-today-plan-heading">☀️ 오늘 할 일 · {{ home_today_plan.date|date:'m/d (D)' }}</h3>
+                <h3 id="home-today-plan-heading">오늘 할 일 · {{ home_today_plan.date|date:'m/d (D)' }}</h3>
                 <p><strong>{{ home_today_plan.action }}</strong></p>
                 {% if home_today_plan.rest %}
                 <p>🛌 오늘은 휴식일입니다. 운동으로 게이지를 채울 필요가 없어요.</p>
@@ -871,7 +873,7 @@
             <div class="summary-cards">
 
                 <div class="stat-card">
-                    <div class="icon-box icon-steps">👟</div>
+                    <span class="stitch-metric-index">01 / ACTIVITY</span>
                     <div>
                         <p class="value">
                             {{ today_steps|default:"0" }}
@@ -883,7 +885,7 @@
                 </div>
 
                 <div class="stat-card">
-                    <div class="icon-box icon-food">🍔</div>
+                    <span class="stitch-metric-index">02 / NUTRITION</span>
                     <div>
                         <p class="value">
                             {{ avg_calories_in|default_if_none:"0" }}
@@ -894,7 +896,7 @@
                 </div>
 
                 <div class="stat-card">
-                    <div class="icon-box icon-fire">🔥</div>
+                    <span class="stitch-metric-index">03 / WORKOUT BURN</span>
                     <div>
                         <p class="value">
                             {{ total_calories_out|default_if_none:"0" }}
@@ -1070,7 +1072,7 @@
         </main>
 
         <!-- 3. 오른쪽 프로필 패널 -->
-        <aside class="right-panel">
+        <aside class="right-panel"><span class="stitch-eyebrow">MEMBER PROFILE / 나의 프로필</span>
 
             <h2>{{ profile.nickname }}님의 프로필</h2>
 
@@ -1120,7 +1122,7 @@
 
             {% if needs_exercise_record or needs_meal_record %}
             <section class="dark-card record-reminder" aria-labelledby="daily-reminder-heading">
-                <h3 id="daily-reminder-heading">🔔 오늘의 기록 알림</h3>
+                <span class="stitch-eyebrow">ACTION REQUIRED</span><h3 id="daily-reminder-heading">오늘의 기록 알림</h3>
                 <p class="notice-caption">한국 시간 {{ reminder_day|date:'Y-m-d' }} 기준 등록된 기록을 확인합니다.</p>
                 {% if needs_exercise_record %}
                 <div class="reminder-item">

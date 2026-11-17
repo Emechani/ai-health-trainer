@@ -1,4 +1,5 @@
 {% extends 'users/profile_update.html' %}
+{% block app_page_class %}page-goals{% endblock %}
 {% block page_title %}목표 실천 · Health Overview{% endblock %}
 {% block extra_styles %}
     .goal-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; margin-top: 20px; }
@@ -17,7 +18,7 @@
     @media(max-width:1000px) { .goal-grid { grid-template-columns: 1fr; } }
 {% endblock %}
 {% block main_content %}
-<header class="header-wrapper"><div class="header"><h1>🎯 목표 실천</h1><p>목표 체중을 향해, AI가 정해 주는 이번 주 작은 도전을 실천해 보세요.</p></div><a class="button back-link" href="{% url 'home' %}">← 홈으로</a></header>
+<header class="header-wrapper"><div class="header"><span class="stitch-eyebrow">INDEX 03 / GOAL EXECUTION</span><h1>목표 실천</h1><p>목표 체중을 향해, AI가 정해 주는 이번 주 작은 도전을 실천해 보세요.</p></div><a class="button back-link" href="{% url 'home' %}">← 홈으로</a></header>
 {% if profile_ready %}
 <section class="card"><h2>나의 체중 목표</h2><p class="goal-details">현재 <strong>{{ profile.current_weight }} kg</strong> → 목표 <strong>{{ profile.target_weight }} kg</strong></p>
 {% if profile.weight_progress_percentage != None %}<p>실제 체중 목표 달성률 {{ profile.weight_progress_percentage }}%</p><progress class="goal-meter" max="100" value="{{ profile.weight_progress_percentage }}" aria-label="실제 체중 목표 달성률"></progress>{% else %}<p class="help-text">시작 체중을 설정하면 체중 목표 달성률도 볼 수 있습니다.</p>{% endif %}
