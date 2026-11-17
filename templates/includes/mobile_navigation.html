@@ -11,6 +11,6 @@
 <dialog id="mobile-record-sheet" aria-labelledby="mobile-record-title">
 <div class="mobile-sheet-heading"><h2 id="mobile-record-title">기록하기</h2><button type="button" id="mobile-record-close" aria-label="기록 선택 닫기">✕</button></div>
 <p>오늘 기록할 활동을 선택해 주세요.</p>
-<a href="{% url 'today_record' %}" class="mobile-action">운동 기록하기 <span aria-hidden="true">→</span></a>
-<a href="{% url 'meal_record' %}" class="mobile-action">식사 기록하기 <span aria-hidden="true">→</span></a>
+<a href="{% url 'today_record' %}" class="mobile-action"><span>운동 기록하기<small>운동 종목, 시간, 걸음 수 기록</small></span> <span aria-hidden="true">→</span></a>
+<a href="{% url 'meal_record' %}" class="mobile-action"><span>식사 기록하기<small>사진 또는 음식 이름으로 기록</small></span> <span aria-hidden="true">→</span></a>
 </dialog>

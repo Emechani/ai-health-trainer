@@ -1,5 +1,6 @@
 /* 모바일 전용 구성: PC 테마와 기존 폼·데이터를 재사용합니다. */
 .mobile-only, .mobile-nav { display: none !important; }
+.mobile-photo-preview { display: none; }
 #mobile-record-sheet { border: 1px solid #dfe5eb; border-radius: 24px 24px 0 0; padding: 24px; color: #172538; background: #fff; }
 #mobile-record-sheet::backdrop { background: rgb(16 32 48 / .45); }
 .mobile-action { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 12px 16px; border-radius: 12px; border: 1px solid #dfe5eb; background: #edf5ef; color: #176447; font-weight: 700; text-decoration: none; }
@@ -66,4 +67,136 @@
     .stitch-app .record-list li { min-width: 0; flex-wrap: wrap; }
     .stitch-app .record-list li > div { min-width: 0; overflow-wrap: anywhere; }
     .stitch-app .record-list .action-links { width: 100%; }
+}
+
+/* 첨부한 모바일 시안: 작은 카드와 연한 청색 입력 영역, 남색·초록 강조 */
+@media (max-width: 760px) {
+    body.stitch-app { --canvas: #f7f8ff; --ink: #1d2b3e; --green: #006c49; --line: #e8edf7; font-size: 13px; line-height: 1.6; }
+    .stitch-app .stitch-topbar { min-height: 58px; padding: 10px 16px; background: #fcfcff; border-bottom: 1px solid #edf0f7; }
+    .stitch-wordmark { position: relative; padding: 0 0 12px 31px; letter-spacing: -.04em !important; }
+    .stitch-wordmark::before { content: '∿'; position: absolute; left: 0; top: 0; width: 24px; height: 24px; display: grid; place-items: center; background: #1d2b3e; color: white; border-radius: 7px; font-size: 22px; }
+    .stitch-wordmark::after { content: 'AI HEALTH ASSISTANT'; position: absolute; left: 31px; bottom: 0; color: #627785; font-size: 8px; letter-spacing: .05em; }
+    .stitch-app .stitch-account { display: grid; place-items: center; width: 34px; height: 34px; overflow: hidden; border-radius: 50%; background: #eaf0fb; color: #1d2b3e; font-size: 10px; }
+    .stitch-app .main-content, .stitch-app.page-home .main-content, .stitch-app.page-calendar .main-content { padding: 16px; }
+    .stitch-app :is(h1, .header h2) { font-size: 20px; letter-spacing: -.04em; }
+    .stitch-app :is(h2,h3) { letter-spacing: -.025em; }
+    .stitch-app :is(.card,.activity-card,.dark-card) { border: 0; background: #fff; border-radius: 18px; box-shadow: none; padding: 16px; margin-bottom: 16px; }
+    .stitch-app :is(.card h2,.activity-card h3) { font-size: 16px; margin: 0 0 12px; }
+    .stitch-app .header-wrapper { gap: 8px; align-items: center; }
+    .stitch-app .header-wrapper .header p { font-size: 11px; margin: 4px 0 0; color: #627785; }
+    .stitch-app .header-wrapper > :is(.button,.back-link) { font-size: 11px; min-height: 40px; padding: 8px 12px; }
+    .stitch-app :is(.help-text,.notice-caption,.form-note) { font-size: 11px; line-height: 1.7; }
+    .stitch-app :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea) { background: #eff3ff !important; border: 1px solid transparent !important; color: #1d2b3e; box-shadow: none; }
+    .stitch-app :is(input,select,textarea):focus { outline: 2px solid #97b4d5; outline-offset: 2px; }
+    .stitch-app :is(.button-primary,.btn-submit,.btn-ai) { border: 0; border-radius: 12px; background: #1d2b3e; color: #fff; font-weight: 700; min-height: 48px; box-shadow: none; }
+    .stitch-app .btn-submit.green { background: #006c49; }
+    .mobile-nav { box-shadow: 0 -3px 16px rgb(29 43 62 / .04); }
+    .mobile-nav :is(a,button) { font-size: 10px; color: #75818b; }
+    .mobile-nav :is([aria-current=page],.is-active) svg { background: #d9f8ea; border-radius: 8px; box-sizing: content-box; padding: 3px 8px; margin: -3px -8px; }
+    .stitch-app .mobile-fold { border: 1px solid #e7ecf6; border-radius: 14px; margin: 10px 0; }
+    .mobile-fold > summary { display: flex; align-items: center; justify-content: space-between; padding: 14px; list-style: none; font-size: 13px; }
+    .mobile-fold > summary::-webkit-details-marker { display: none; }
+    .mobile-fold > summary::after { content: '⌄'; color: #63788b; margin-left: 8px; }
+    .mobile-fold[open] > summary::after { content: '⌃'; }
+    .stitch-app .mobile-fold > :not(summary) { margin: 0; }
+    .stitch-app .mobile-action { background: #e8efff; color: #1d2b3e; border: 0; font-size: 13px; }
+    .stitch-app .mobile-quick-actions { gap: 10px; }
+    .mobile-quick-actions .mobile-action:first-child { background: #1d2b3e; color: #fff; }
+    .mobile-quick-actions .mobile-action:last-child { background: #dfebff; color: #1d2b3e; }
+    .stitch-app .mobile-coach-link { background: #1d2b3e; color: #fff; border-radius: 14px; padding: 16px; }
+    .stitch-app.page-home .header h1 { display: none; }
+    .stitch-app.page-home .header::before { content: 'DAILY ROUTINE'; color: #006c49; font-size: 9px; letter-spacing: .06em; }
+    .stitch-app.page-home .header p { font-size: 15px; color: #1d2b3e; font-weight: 700; }
+    .stitch-app.page-home .today-plan-card h3 { font-size: 14px; color: #006c49; }
+    .stitch-app.page-home .today-plan-card > p:first-of-type { background: #eff3ff; padding: 12px; border-radius: 12px; margin: 12px 0; }
+    .stitch-app.page-home .today-plan-meals > div { background: #f0f4ff; padding: 10px !important; }
+    .stitch-app.page-home .today-plan-meals h4 { color: #006c49; font-size: 11px; }
+    .stitch-app.page-home .today-plan-meals p { font-size: 12px; }
+    .stitch-app.page-home .today-plan-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stitch-app.page-home .today-plan-actions a { flex: 1 1 100px; font-size: 11px; justify-content: center; }
+    .stitch-app.page-home .today-plan-actions a:last-child { flex: 1 1 100%; background: #e5eeff; }
+    .stitch-app.page-home .stat-card { border: 0; padding: 16px; border-radius: 16px; background: #fff; gap: 8px; }
+    .stitch-app.page-home .stat-card .value { font-size: 28px; }
+    .stitch-app.page-home .stitch-metric-index { color: #006c49; font-size: 9px; flex-basis: 64px; }
+    .mobile-steps-sync { background: #fff; padding: 0 16px 16px; border-radius: 0 0 16px 16px; margin-top: -16px; }
+    .mobile-steps-sync .btn-ai { min-height: 44px; background: #eaf7f1; color: #006c49; font-size: 12px; }
+    .stitch-app.page-home .record-reminder { background: #fff0f2; border-radius: 14px; }
+    .stitch-app.page-home .record-reminder h3 { color: #913445; font-size: 13px; margin: 0 0 6px; }
+    .stitch-app.page-home .record-reminder .notice-caption { display: none; }
+    .stitch-app.page-home .record-reminder p { font-size: 12px; margin: 0 0 8px; }
+    .stitch-app.page-calendar .header-wrapper { display: none; }
+    .stitch-app.page-calendar .main-content > .mobile-coach-link { margin-bottom: 16px; }
+    .stitch-app .cal-inner-box { padding: 16px; border: 0; border-radius: 18px; background: #fff; box-shadow: none; }
+    .stitch-app .cal-header { margin-bottom: 12px; padding-bottom: 0; border: 0; }
+    .stitch-app .cal-header h2 { font-size: 17px; margin: 0; }
+    .stitch-app .cal-header a { font-size: 10px; border-radius: 8px; background: #eff3ff; }
+    .stitch-app .trainer-shortcut { display: none; }
+    .stitch-app .calendar-mobile-ready .calendar-table { background: #fff; }
+    .stitch-app .calendar-mobile-ready .calendar-table :is(th,td) { border: 0; background: transparent !important; }
+    .stitch-app .calendar-mobile-ready .calendar-table th { padding: 8px 0; font-size: 10px; }
+    .stitch-app .calendar-mobile-ready .calendar-table td { height: 48px; }
+    .stitch-app .mobile-day-button { min-height: 44px; border-radius: 10px; font-size: 12px; }
+    .stitch-app .mobile-day-button[aria-pressed=true] { background: #1d2b3e; color: #fff; border-color: #1d2b3e; }
+    .stitch-app .mobile-day-button small { color: #006c49; font-size: 9px; }
+    .stitch-app .mobile-day-button[aria-pressed=true] small { color: #6ffbbe; }
+    .stitch-app .mobile-day-agenda { border-top: 1px solid #edf0f7; margin-top: 16px; padding-top: 16px; }
+    .stitch-app .mobile-day-agenda h3 { font-size: 14px; }
+    .stitch-app #mobile-day-records li { border: 0; border-radius: 10px; padding: 12px; margin: 8px 0; background: #eff3ff; overflow-wrap: anywhere; }
+    .stitch-app.page-calendar.mobile-chat-open .chat-section { padding: 16px; }
+    .stitch-app .chat-section h3 { font-size: 18px; border: 0; margin: 8px 0; padding: 0; }
+    .stitch-app .chat-history-controls { gap: 8px; }
+    .stitch-app .chat-history-controls select { flex: 1; width: 100%; font-size: 12px !important; }
+    .stitch-app .chat-msg { border: 0; border-radius: 16px; padding: 16px; font-size: 14px; box-shadow: none; }
+    .stitch-app .chat-ai { background: #fff; color: #1d2b3e; border-bottom-left-radius: 4px; }
+    .stitch-app .chat-user { background: #1d2b3e; color: #fff; border-bottom-right-radius: 4px; }
+    .stitch-app .chat-markdown blockquote { margin: 12px 0; border: 0; border-radius: 10px; padding: 12px; background: #eff3ff; }
+    .stitch-app .chat-markdown :is(ul,ol) { padding-left: 20px; }
+    .stitch-app .chat-input-area button { background: #1d2b3e; border-radius: 12px; min-width: 48px; }
+    .stitch-app.page-goals .goal-today { background: #fff; border: 0; }
+    .stitch-app.page-goals .goal-today > .goal-details { background: #1d2b3e; color: #fff; border-radius: 12px; padding: 14px; font-size: 13px; }
+    .stitch-app.page-goals .goal-today > p:not(.goal-details):not(.help-text) { background: #eff3ff; border-radius: 12px; padding: 12px; }
+    .stitch-app.page-goals .goal-today .goal-grid > div { padding: 12px 12px 12px 46px; position: relative; background: #f0f4ff; }
+    .stitch-app.page-goals .goal-today .goal-grid > div::before { content: '식'; position: absolute; left: 12px; top: 14px; display: grid; place-items: center; width: 26px; height: 30px; background: #dceee5; border-radius: 9px; color: #006c49; font-size: 11px; }
+    .stitch-app.page-goals .goal-today .goal-grid p { font-size: 12px; }
+    .stitch-app.page-goals .goal-today .form-actions .button { flex: 1 1 100px; justify-content: center; font-size: 12px; }
+    .stitch-app.page-goals .goal-today .form-actions .button:last-child { background: #006c49; color: white; }
+    .stitch-app.page-profile .header-wrapper { display: none; }
+    .stitch-app.page-profile .profile-panel { padding: 18px; border: 0; margin-bottom: 14px; border-radius: 18px; }
+    .stitch-app.page-profile .profile-panel h2 { margin: 0; font-size: 19px; }
+    .stitch-app.page-profile .weight-summary { background: #eff3ff; padding: 12px; border-radius: 12px; }
+    .stitch-app.page-profile .weight-row { padding: 9px 0; }
+    .stitch-app.page-profile .weight-row dd { font-size: 24px; }
+    .stitch-app .forms-container { gap: 18px; }
+    .stitch-app .forms-container > .card { padding: 16px; border-radius: 18px; }
+    .stitch-app .forms-container .card h3 { border: 0; padding: 0; margin: 0 0 18px; color: #1d2b3e !important; font-size: 16px; }
+    .stitch-app .input-card form p { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin: 0 0 16px; }
+    .stitch-app .input-card label { color: #334155 !important; font-size: 12px; font-weight: 600; }
+    .stitch-app .input-card .btn-submit { width: 100%; }
+    .stitch-app .mobile-time-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
+    .stitch-app .mobile-time-grid p { min-width: 0; }
+    .mobile-duration { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 10px; background: #dff7f0; color: #006c49; font-size: 12px; margin-bottom: 16px; }
+    .mobile-duration strong { font-size: 18px; }
+    .stitch-app .record-list li { background: #f0f4ff; border: 0; padding: 14px; border-radius: 12px; }
+    .stitch-app .record-list li strong { color: #1d2b3e !important; }
+    .stitch-app .action-links :is(.edit,.delete) { min-height: 40px; padding: 9px 12px; border: 0; border-radius: 8px; background: white; }
+    .stitch-app .action-links .delete { color: #bb4856; background: #fff0f2; }
+    .mobile-photo-preview:not([hidden]) { display: block; position: relative; padding: 8px; background: #eff3ff; border-radius: 14px; margin-bottom: 16px; }
+    .mobile-photo-preview img { display: block; width: 100%; max-height: 240px; object-fit: contain; border-radius: 10px; }
+    .mobile-photo-preview button { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: #1d2b3e; color: white; }
+    #mobile-record-sheet { bottom: 16px; left: 16px; right: 16px; width: calc(100% - 32px); max-height: 80dvh; border: 0; border-radius: 24px; padding: 20px; }
+    #mobile-record-sheet::backdrop { background: rgb(29 43 62 / .4); backdrop-filter: blur(3px); }
+    #mobile-record-sheet .mobile-action { background: #eff3ff; border: 0; padding: 16px; min-height: 72px; }
+    #mobile-record-sheet .mobile-action small { display: block; color: #697586; font-size: 11px; font-weight: 400; margin-top: 4px; }
+}
+
+@media (max-width: 760px) {
+    .stitch-app .header-wrapper { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
+    .stitch-app .header { display: block; text-align: left; }
+    .stitch-app .header h1 { white-space: nowrap; }
+    .stitch-app.page-home .header-wrapper { display: block; }
+    .stitch-app .stitch-account { font-size: 0; flex: 0 0 34px; }
+    .stitch-app .stitch-account::before { content: '내'; font-size: 12px; font-weight: 700; }
+    .stitch-app .mobile-duration { display: flex !important; gap: 12px; }
+    .mobile-duration strong { font-size: 14px; text-align: right; }
+    .stitch-app.page-home .today-plan-meals { border: 0; }
 }

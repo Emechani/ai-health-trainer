@@ -341,7 +341,7 @@
                     <form method="POST">
                         {% csrf_token %}
                         {{ exercise_form.as_p }}
-                        <button type="submit" name="submit_exercise" class="btn-submit">운동 추가하기</button>
+                        <button type="submit" name="submit_exercise" class="btn-submit">운동 저장</button>
                     </form>
                 </section>
 
@@ -383,7 +383,7 @@
                             <label style="color: #4CAF50;">💡 직접 입력 (사진이 없을 때)</label>
                             <input type="text" name="food_text" placeholder="예: 양념치킨 반 마리, 콜라 1캔">
                         </p>
-                        <button type="submit" name="submit_meal" class="btn-submit green">식사 추가하기</button>
+                        <button type="submit" name="submit_meal" class="btn-submit green">식사 저장</button>
                     </form>
                 </section>
 
