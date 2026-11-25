@@ -16,7 +16,7 @@ class NutritionAndMealArchiveSafetyTests(TestCase):
     def setUp(self):
         self.user=User.objects.create_user(username='archive-owner')
         self.other=User.objects.create_user(username='archive-other')
-        UserProfile.objects.create(user=self.user,current_weight=90,target_weight=80)
+        UserProfile.objects.create(user=self.user,current_weight=90,target_weight=80,exercise_days_per_week=3,exercise_minutes_per_session=30)
         self.client.force_login(self.user)
         self.day=timezone.localdate()
         self.plan={'summary':'보관용 식단','meals':[{'meal_type':code,'food_name':'보관 메뉴','portion':'밥과 반찬',
@@ -38,7 +38,15 @@ class NutritionAndMealArchiveSafetyTests(TestCase):
         return Meal.objects.create(daily_record=daily,meal_type='L',food_name='수정 전',calories=500,carbs=60,protein=20,fat=10)
 
     def generate(self):
-        return self.client.post(reverse('meal_plan'),{'action':'meal_plan','food_preferences':'한식','dietary_restrictions':'우유 제외'})
+        from .test_goal_progress import example_week
+        if self.model.generate_content.return_value.text != 'invalid response':
+            weekly = example_week()
+            weekly['weekly_focus'] = self.plan['summary']
+            for day in weekly['days']:
+                day['meals'] = self.plan['meals']
+            self.model.generate_content.return_value.text = json.dumps(weekly)
+        self.client.post(reverse('goal_progress'), {'action':'save_food_options','food_preferences':'한식','dietary_restrictions':'우유 제외'})
+        return self.client.post(reverse('goal_progress'))
 
     def test_manual_nutrients_reload_and_affect_summary(self):
         meal=self.meal()
@@ -84,13 +92,13 @@ class NutritionAndMealArchiveSafetyTests(TestCase):
         self.assertFalse(Meal.objects.exists())
         self.assertFalse(DailyRecord.objects.exists())
 
-    def test_same_day_regeneration_keeps_each_version(self):
+    def test_same_week_regeneration_reuses_saved_plan(self):
         self.generate()
         first=SavedMealPlan.objects.get()
         self.plan['summary']='다시 생성한 식단'
         self.model.generate_content.return_value.text=json.dumps(self.plan)
         self.generate()
-        self.assertEqual(SavedMealPlan.objects.filter(date=self.day).count(),2)
+        self.assertEqual(SavedMealPlan.objects.filter(date=self.day).count(),1)
         first.refresh_from_db()
         self.assertEqual(first.plan['summary'],'보관용 식단')
 
@@ -143,7 +151,7 @@ class NutritionAndMealArchiveSafetyTests(TestCase):
 
     def test_failed_generation_and_nutrition_advice_do_not_archive(self):
         self.model.generate_content.return_value.text='invalid response'
-        self.assertEqual(self.generate().status_code,200)
+        self.assertEqual(self.generate().status_code,302)
         self.assertFalse(SavedMealPlan.objects.exists())
         self.meal()
         self.model.generate_content.return_value.text=json.dumps({'summary':'부분 기록 안내','items':[{'nutrient':'기록','observation':'부분 기록','suggestion':'확인해 주세요'}],'cautions':['결핍을 진단하지 않습니다.']})

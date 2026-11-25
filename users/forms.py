@@ -81,7 +81,7 @@ class UserProfileForm(forms.ModelForm):
 
 class ProfileUpdateForm(UserProfileForm):
     profile_color = forms.ChoiceField(label='프로필 원 색상', choices=UserProfile.PROFILE_COLORS, required=False,
-                                     help_text="오른쪽 위 '내' 원에 적용됩니다. 선택 후 변경사항을 저장해 주세요.")
+                                     help_text="상단 프로필 원과 프로필 카드 아이콘에 적용됩니다. 선택 후 변경사항을 저장해 주세요.")
 
     def clean_profile_color(self):
         return self.cleaned_data.get('profile_color') or self.instance.badge_color_key
@@ -94,12 +94,12 @@ class ProfileUpdateForm(UserProfileForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['recovery_email'].initial = self.instance.user.email
+        self.fields['recovery_email'].initial = self.instance.user.email if self.instance.user_id else ''
 
     def clean(self):
         data = super().clean()
         email = data.get('recovery_email', '')
-        self.update_email = self.is_bound and 'recovery_email' in self.data and email != self.instance.user.email
+        self.update_email = bool(self.instance.user_id and self.is_bound and 'recovery_email' in self.data and email != self.instance.user.email)
         if self.update_email and not self.instance.user.check_password(data.get('email_password', '')):
             self.add_error('email_password', '이메일을 변경하려면 현재 비밀번호를 정확히 입력해 주세요.')
         return data

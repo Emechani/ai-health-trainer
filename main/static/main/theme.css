@@ -82,3 +82,6 @@ html[data-theme="dark"] .stitch-app .weight-chart text { fill: #c3cfdf; }
 .stitch-app .profile-panel .avatar.badge-color-peach { background: #ffe3c9; color: #784322; border: 1px solid #8795aa; }
 .stitch-app .profile-panel .avatar.badge-color-navy { background: #1d2b3e; color: #ffffff; border: 1px solid #8795aa; }
 @media(max-width:760px) { .stitch-app .stitch-account.badge-color-white { background: #fff; color: #1d2b3e; border: 1px solid #dfe5eb; } }
+
+/* 어두운 화면에서도 입력 항목 이름과 달력 설명을 읽을 수 있게 유지합니다. */
+html[data-theme="dark"] .stitch-app :is(.field label, form p > label, .appearance-control label, .mobile-day-agenda > p) { color: #c9d6e7 !important; }

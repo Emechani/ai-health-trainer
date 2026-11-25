@@ -1,3 +1,4 @@
+from .models import SavedMealPlan
 import json
 import io
 import tempfile
@@ -376,11 +377,11 @@ class NutritionAdviceSecurityTests(TestCase):
         self.assertIn('본인 영양 기록', prompt)
         self.assertIn('땅콩 제외', prompt)
         self.assertNotIn('다른 사람 비밀 식사', prompt)
-        self.assertContains(self.client.get(reverse('meal_plan')), '모의 영양 보완 요약')
+        self.assertContains(self.client.get(reverse('goal_progress')), '모의 영양 보완 요약')
         self.model.generate_content.assert_called_once()
 
     def test_no_meals_does_not_call_api(self):
-        response = self.client.post(reverse('meal_plan'), {'action': 'nutrition_advice'})
+        response = self.client.post(reverse('meal_plan'), {'action': 'nutrition_advice'}, follow=True)
         self.assertContains(response, '식사 기록을 먼저 등록')
         self.model.generate_content.assert_not_called()
 
@@ -395,38 +396,22 @@ class NutritionAdviceSecurityTests(TestCase):
     def test_failed_response_does_not_leak_errors_or_persist_advice(self):
         Meal.objects.create(daily_record=self.daily, meal_type='L', food_name='본인')
         self.model.generate_content.side_effect = RuntimeError('mock-private-exception')
-        response = self.client.post(reverse('meal_plan'), {'action': 'nutrition_advice'})
+        response = self.client.post(reverse('meal_plan'), {'action': 'nutrition_advice'}, follow=True)
         self.assertContains(response, '영양 보완 안내를 생성하지 못했습니다')
         self.assertNotContains(response, 'mock-private-exception')
         self.assertNotIn('goal_nutrition_advice', self.client.session)
 
 
 class MealPlanSecurityTests(TestCase):
+    """별도 식단 생성 종료 후 목표 실천으로 통합되는 동작을 검증합니다."""
     def setUp(self):
         self.user = User.objects.create_user(username='meal-plan-owner')
-        self.profile = UserProfile.objects.create(
-            user=self.user, start_weight=100, current_weight=90, target_weight=80,
-            exercise_experience='beginner', exercise_days_per_week=3,
-            exercise_minutes_per_session=30, preferred_exercises='걷기',
-        )
+        self.profile = UserProfile.objects.create(user=self.user, current_weight=90, target_weight=80)
         self.client.force_login(self.user)
         self.url = reverse('meal_plan')
-        self.model_patch = patch('records.views.genai.GenerativeModel')
-        self.model = self.model_patch.start().return_value
-        self.addCleanup(self.model_patch.stop)
-        config_patch = patch('records.views.genai.configure')
-        config_patch.start()
-        self.addCleanup(config_patch.stop)
-        key_patch = patch.dict('os.environ', {'GEMINI_API_KEY': 'mock-only'})
-        key_patch.start()
-        self.addCleanup(key_patch.stop)
-        self.output = {
-            'summary': '실제 목표를 참고한 모의 식단',
-            'meals': [{'meal_type': code, 'food_name': '모의 메뉴', 'portion': '밥 1공기와 반찬',
-                       'calories': 600, 'carbs': 70, 'protein': 30, 'fat': 20, 'reason': '모의 선정 이유'} for code in ('B', 'L', 'D')],
-            'notes': ['영양 수치는 추정치입니다.'],
-        }
-        self.model.generate_content.return_value.text = json.dumps(self.output)
+        self.ai_patch = patch('records.views.generate_ai')
+        self.ai = self.ai_patch.start()
+        self.addCleanup(self.ai_patch.stop)
 
     def test_login_csrf_and_method_protection(self):
         self.client.logout()
@@ -436,79 +421,52 @@ class MealPlanSecurityTests(TestCase):
         self.assertEqual(client.post(self.url).status_code, 403)
         self.client.force_login(self.user)
         self.assertEqual(self.client.delete(self.url).status_code, 405)
-        self.model.generate_content.assert_not_called()
+        self.ai.assert_not_called()
 
-    def test_generation_and_get_cache_do_not_create_food_records(self):
-        self.assertEqual(self.client.post(self.url, {'food_preferences': '한식'}).status_code, 302)
-        for _ in range(2):
-            response = self.client.get(self.url)
-            self.assertContains(response, '모의 메뉴')
-            self.assertEqual(response.context['plan']['totals']['calories'], 1800)
-        self.model.generate_content.assert_called_once()
+    def test_retired_get_and_generation_redirect_without_ai(self):
+        for response in [self.client.get(self.url), self.client.post(self.url, {'action':'meal_plan'})]:
+            self.assertRedirects(response, reverse('goal_progress'), fetch_redirect_response=False)
+        self.ai.assert_not_called()
         self.assertFalse(Meal.objects.exists())
-        self.assertFalse(DailyRecord.objects.exists())
-        self.assertFalse(ChatMessage.objects.exists())
+        self.assertFalse(SavedMealPlan.objects.exists())
 
-    def test_prompt_uses_only_owner_data_and_actual_goal(self):
+    def test_food_conditions_save_without_generating_plan(self):
+        response = self.client.post(reverse('goal_progress'), {'action':'save_food_options', 'food_preferences':'한식', 'dietary_restrictions':'땅콩 제외'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.session['meal_plan_options']['dietary_restrictions'], '땅콩 제외')
+        self.ai.assert_not_called()
+        self.assertFalse(SavedMealPlan.objects.exists())
+
+    def test_invalid_food_conditions_do_not_replace_saved_conditions(self):
+        self.client.post(reverse('goal_progress'), {'action':'save_food_options', 'food_preferences':'한식'})
+        response = self.client.post(reverse('goal_progress'), {'action':'save_food_options', 'food_preferences':'x'*301}, follow=True)
+        self.assertContains(response, '입력 내용을 확인')
+        self.assertEqual(self.client.session['meal_plan_options']['food_preferences'], '한식')
+        self.ai.assert_not_called()
+
+    def test_other_user_does_not_receive_saved_conditions(self):
+        self.client.post(reverse('goal_progress'), {'action':'save_food_options', 'dietary_restrictions':'본인만의 조건'})
         other = User.objects.create_user(username='meal-plan-other')
-        UserProfile.objects.create(user=other, current_weight=60, target_weight=55)
-        other_record = DailyRecord.objects.create(user=other, date=current_chat_day())
-        Meal.objects.create(daily_record=other_record, meal_type='L', food_name='다른 사용자 비밀 음식')
-        old = DailyRecord.objects.create(user=self.user, date=current_chat_day()-timedelta(days=7))
-        Meal.objects.create(daily_record=old, meal_type='L', food_name='오래된 비밀 음식')
-        current = DailyRecord.objects.create(user=self.user, date=current_chat_day())
-        Meal.objects.create(daily_record=current, meal_type='L', food_name='본인 최근 음식')
-        self.client.post(self.url, {'user_id': other.pk, 'target_weight': '1', 'dietary_restrictions': '땅콩 제외'})
-        prompt = self.model.generate_content.call_args.args[0]
-        self.assertIn('본인 최근 음식', prompt)
-        self.assertIn('땅콩 제외', prompt)
-        self.assertIn('"target_weight": 80.0', prompt)
-        self.assertIn('운동 경험: 초급', prompt)
-        self.assertNotIn('다른 사용자 비밀 음식', prompt)
-        self.assertNotIn('오래된 비밀 음식', prompt)
-
-    def test_missing_goal_does_not_call_ai(self):
-        self.profile.target_weight = None
-        self.profile.save()
-        response = self.client.post(self.url)
-        self.assertContains(response, '현재 체중과 목표 체중을 먼저 설정')
-        self.model.generate_content.assert_not_called()
-
-    def test_profile_change_and_new_day_invalidate_cached_plan(self):
-        self.client.post(self.url)
-        self.profile.target_weight = 75
-        self.profile.save()
-        self.assertIsNone(self.client.get(self.url).context['plan'])
-        self.client.post(self.url)
-        with patch('records.views.current_chat_day', return_value=current_chat_day()+timedelta(days=1)):
-            self.assertIsNone(self.client.get(self.url).context['plan'])
-
-    def test_other_user_cannot_see_cached_plan(self):
-        self.client.post(self.url)
-        other = User.objects.create_user(username='different-plan-user')
-        UserProfile.objects.create(user=other, current_weight=70, target_weight=65)
         self.client.force_login(other)
-        self.assertNotContains(self.client.get(self.url), '모의 메뉴')
-        self.assertIsNone(self.client.get(self.url).context['plan'])
+        self.assertNotContains(self.client.get(reverse('goal_progress')), '본인만의 조건')
 
-    def test_provider_error_is_not_exposed_and_old_conditions_are_not_shown(self):
-        self.client.post(self.url)
-        self.model.generate_content.side_effect = RuntimeError('mock-secret-error')
-        response = self.client.post(self.url, {'dietary_restrictions': '새 제한 조건'})
-        self.assertContains(response, '식단을 생성하지 못했습니다')
-        self.assertNotContains(response, 'mock-secret-error')
-        self.assertIsNone(response.context['plan'])
+    def test_retired_generation_does_not_modify_profile(self):
+        self.client.post(self.url, {'action':'meal_plan', 'target_weight':1, 'user_id':999})
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.target_weight, 80)
+        self.ai.assert_not_called()
 
-    def test_invalid_input_and_response_are_rejected(self):
-        response = self.client.post(self.url, {'food_preferences': 'x'*301})
-        self.assertTrue(response.context['plan_form'].errors)
-        self.model.generate_content.assert_not_called()
-        self.model.generate_content.return_value.text = '{invalid-json'
-        self.assertIsNone(self.client.post(self.url).context['plan'])
+    def test_get_goal_never_generates_plan(self):
+        for _ in range(2):
+            self.assertEqual(self.client.get(reverse('goal_progress')).status_code, 200)
+        self.ai.assert_not_called()
+        self.assertFalse(SavedMealPlan.objects.exists())
+
+    def test_invalid_meal_response_still_rejected_for_weekly_goal(self):
+        from .test_goal_progress import example_plan
         from .views import validated_meal_plan
-        from copy import deepcopy
         for value in (-1, float('nan'), True, '600'):
-            data = deepcopy(self.output)
+            data = example_plan()
             data['meals'][0]['calories'] = value
             with self.assertRaises(ValueError):
                 validated_meal_plan(json.dumps(data))
