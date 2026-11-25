@@ -103,3 +103,15 @@ class GoalPlan(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-pk']
+
+
+class WeeklyReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='weekly_reports')
+    start_date = models.DateField('리포트 시작 날짜')
+    source_hash = models.CharField('분석한 기록 식별값', max_length=64)
+    analysis = models.JSONField('주간 AI 분석')
+    model_name = models.CharField('분석 모델', max_length=100)
+    updated_at = models.DateTimeField('분석 시각', auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'start_date'], name='unique_weekly_report_user_date')]

@@ -2,7 +2,7 @@
     <a class="stitch-wordmark" href="{% url 'home' %}"><span class="brand-mark" aria-hidden="true">HO</span><span class="brand-name">HEALTH OVERVIEW</span></a>
     <div class="stitch-breadcrumb" aria-label="현재 화면">
         <span>나의 건강 기록</span><span aria-hidden="true">/</span>
-        <strong>{% if request.resolver_match.url_name == 'home' %}홈{% elif request.resolver_match.url_name == 'exercise_calendar' %}달력 · AI 트레이너{% elif request.resolver_match.url_name == 'goal_progress' %}목표 실천{% elif request.resolver_match.url_name == 'today_record' %}운동 기록{% elif request.resolver_match.url_name == 'meal_record' %}식사 기록{% elif request.resolver_match.url_name == 'meal_plan_history' or request.resolver_match.url_name == 'saved_meal_plan' %}식단 보관함{% else %}프로필 설정{% endif %}</strong>
+        <strong>{% if request.resolver_match.url_name == 'weekly_report' %}주간 건강 리포트{% elif request.resolver_match.url_name == 'home' %}홈{% elif request.resolver_match.url_name == 'exercise_calendar' %}달력 · AI 트레이너{% elif request.resolver_match.url_name == 'goal_progress' %}목표 실천{% elif request.resolver_match.url_name == 'today_record' %}운동 기록{% elif request.resolver_match.url_name == 'meal_record' %}식사 기록{% elif request.resolver_match.url_name == 'meal_plan_history' or request.resolver_match.url_name == 'saved_meal_plan' %}식단 보관함{% else %}프로필 설정{% endif %}</strong>
     </div>
     <div class="stitch-header-actions">
         <a href="{% url 'profile_update' %}" aria-label="내 정보: {{ request.user.userprofile.nickname|default:request.user.username }}" class="stitch-account badge-color-{{ request.user.userprofile.badge_color_key|default:'white' }}">{{ request.user.userprofile.nickname|default:request.user.username }} 님</a>

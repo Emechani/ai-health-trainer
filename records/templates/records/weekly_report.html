@@ -1,0 +1,100 @@
+{% extends 'users/profile_update.html' %}
+{% block app_page_class %}page-report{% endblock %}
+{% block page_title %}주간 건강 리포트 · Health Overview{% endblock %}
+{% block extra_styles %}
+.page-report .header-wrapper { margin-bottom: 20px; }
+.report-nav { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 18px; }
+.report-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+.page-report .report-stat { padding:18px; margin:0; }
+.report-stat h2 { font-size:13px !important; margin-bottom:8px; }
+.report-value { font-size:28px; font-weight:800; line-height:1.4; color:var(--ink); }
+.report-value small { font-size:12px; font-weight:500; }
+.report-stat p { margin:6px 0 0; font-size:12px; color:var(--muted); }
+.report-grid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:18px; align-items:start; }
+.report-grid > * { min-width:0; }
+.page-report .report-card { margin:0 0 18px; padding:22px; }
+.report-bars { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin:20px 0 8px; }
+.report-day { text-align:center; min-width:0; font-size:12px; }
+.report-bar-track { height:115px; display:flex; align-items:flex-end; justify-content:center; margin:7px 0; border-bottom:1px solid var(--line); background:var(--canvas); border-radius:6px 6px 0 0; }
+.report-bar { width:55%; background:var(--green); border-radius:4px 4px 0 0; }
+.report-day strong { display:block; font-size:11px; font-variant-numeric:tabular-nums; }
+.report-day.today { color:var(--green); font-weight:700; }
+.report-markers { display:flex; justify-content:center; gap:4px; min-height:12px; margin-top:7px; }
+.report-dot { width:7px; height:7px; border-radius:50%; background:var(--blue); display:inline-block; }
+.report-dot.meal { background:var(--green); }
+.report-legend { display:flex; gap:12px; align-items:center; font-size:12px; color:var(--muted); flex-wrap:wrap; }
+.report-details { margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
+.report-details summary { cursor:pointer; font-weight:700; }
+.report-day-row { display:grid; grid-template-columns:70px minmax(0,1fr); gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:12px; overflow-wrap:anywhere; }
+.report-day-row p { margin:3px 0; }
+.report-analysis h3 { font-size:14px; margin:18px 0 6px; }
+.report-analysis ul { padding-left:18px; margin:0; }
+.report-analysis li { margin:6px 0; overflow-wrap:anywhere; }
+.report-analysis .button { width:100%; }
+.report-note { font-size:12px; color:var(--muted); line-height:1.7; }
+.report-error { color:#b53d47; }
+@media(max-width:1000px) { .report-grid { grid-template-columns:1fr; } }
+@media(max-width:760px) { .report-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .page-report .report-stat { padding:14px; } .report-value { font-size:25px; } .report-bars { gap:5px; } .page-report .report-card { padding:18px; } .report-nav .button { padding:10px; font-size:12px; } }
+{% endblock %}
+{% block main_content %}
+<header class="header-wrapper"><div class="header"><span class="stitch-eyebrow">WEEKLY / MY HEALTH REPORT</span><h1>주간 건강 리포트</h1><p>{{ week_start|date:'Y.m.d' }} ~ {{ week_end|date:'m.d' }} · 한국 시간 월요일~일요일</p></div><a class="button" href="{% url 'home' %}">← 홈으로</a></header>
+<nav class="report-nav" aria-label="리포트 주 선택">
+<a class="button" href="?week={{ previous_week|date:'Y-m-d' }}">← 이전 주</a>
+<a class="button" href="{% url 'weekly_report' %}">이번 주</a>
+{% if next_week %}<a class="button" href="?week={{ next_week|date:'Y-m-d' }}">다음 주 →</a>{% endif %}
+<span class="report-note">{% if week_start == this_week %}이번 주는 오늘까지의 기록입니다.{% else %}선택한 주의 저장된 기록입니다.{% endif %}</span>
+</nav>
+<div class="report-stats">
+<section class="card report-stat"><h2>총 걸음 수</h2><div class="report-value">{% if totals.step_days %}{{ totals.steps }} <small>보</small>{% else %}—{% endif %}</div><p>{{ totals.step_days }}일 수신·기록 / 중복 합산 제외</p></section>
+<section class="card report-stat"><h2>운동 기록</h2><div class="report-value">{{ totals.minutes|floatformat:'-1' }} <small>분</small></div><p>{{ totals.exercise_count }}건 · {{ totals.exercise_days }}일 기록{% if totals.untimed_count %}<br>시간 미기록 {{ totals.untimed_count }}건 제외{% endif %}</p></section>
+<section class="card report-stat"><h2>식사 기록</h2><div class="report-value">{{ totals.meal_days }} <small>일 / {{ totals.elapsed_days }}일</small></div><p>총 {{ totals.meal_count }}건 · 미기록은 미실천이 아니에요</p></section>
+<section class="card report-stat"><h2>체중 변화</h2><div class="report-value">{% if totals.weight_change != None %}{% if totals.weight_change > 0 %}+{% endif %}{{ totals.weight_change|floatformat:1 }} <small>kg</small>{% else %}—{% endif %}</div><p>{% if totals.weight_change != None %}첫 측정 → 마지막 측정{% else %}주간 측정 기록 2개 이상 필요{% endif %}</p></section>
+</div>
+<div class="report-grid">
+<div><section class="card report-card" aria-labelledby="report-chart-title"><h2 id="report-chart-title">일주일 활동 기록</h2>
+<div class="report-bars" role="group" aria-label="요일별 걸음 수와 운동·식사 기록">
+{% for day in days %}<div class="report-day{% if day.is_today %} today{% endif %}">
+<span>{{ day.weekday }} {{ day.date|date:'d' }}</span><div class="report-bar-track" aria-hidden="true"><div class="report-bar" style="height:{{ day.bar_percent }}%"></div></div>
+<strong>{% if day.future %}예정{% elif day.known_steps %}{{ day.steps }}보{% else %}미기록{% endif %}</strong>
+<div class="report-markers">{% if day.exercise_count %}<span class="report-dot" title="운동 기록 {{ day.exercise_count }}건" aria-label="운동 기록 {{ day.exercise_count }}건"></span>{% endif %}{% if day.meal_count %}<span class="report-dot meal" title="식사 기록 {{ day.meal_count }}건" aria-label="식사 기록 {{ day.meal_count }}건"></span>{% endif %}</div>
+</div>{% endfor %}</div>
+<div class="report-legend"><span><i class="report-dot"></i> 운동 기록</span><span><i class="report-dot meal"></i> 식사 기록</span></div>
+<p class="report-note">걸음 수는 날짜별 수동 기록·이전 Google Fit·Google Health 집계 중 큰 값을 사용합니다. 운동 시간은 시간이 겹친 구간을 한 번만 집계합니다.</p>
+<details class="report-details"><summary>날짜별 상세 기록</summary>{% for day in days %}<div class="report-day-row"><strong>{{ day.date|date:'m/d' }} ({{ day.weekday }})</strong><div>{% if day.future %}예정{% else %}<p>운동 {{ day.exercise_count }}건 · {{ day.minutes|floatformat:'-1' }}분{% if day.exercise_names %} · {{ day.exercise_names|join:', ' }}{% endif %}</p><p>식사 {{ day.meal_count }}건 · 아침·점심·저녁 중 {{ day.meal_slots }}끼 기록</p>{% endif %}</div></div>{% endfor %}
+{% if weights %}<p class="report-note">체중 측정</p>{% for weight in weights %}<div class="report-day-row"><span>{{ weight.date|date:'m/d' }}</span><strong>{{ weight.weight }} kg</strong></div>{% endfor %}{% endif %}</details>
+</section>
+<section class="card report-card"><h2>목표 실천과 기록</h2>
+{% if plan %}<p class="report-note">선택한 주의 최신 저장 계획 기준입니다. 계획 수정 전의 실천도 현재 계획과 비교됩니다.</p>
+{% for row in plan_rows %}<div class="report-day-row"><strong>{{ row.date|date:'m/d (D)' }}</strong><span>{% if row.future %}예정 · {% endif %}{% if row.rest %}휴식일{% else %}{{ row.exercise_name }} {{ row.target_minutes }}분 / 동일 종목 기록 {{ row.minutes|floatformat:'-1' }}분{% endif %}</span></div>{% endfor %}
+<p class="report-note">식사 {{ totals.meal_days }}일 기록 · 기록 여부만 표시하며, 실제 식단 준수 여부를 판정하지 않습니다.</p>
+<a class="button" href="{% url 'goal_progress' %}?plan={{ plan.pk }}">저장된 계획 보기 →</a>
+{% else %}<p>이 주에 생성한 실천 계획이 없어요.</p><p class="report-note">기록 요약은 계획 없이도 확인할 수 있습니다.</p><a class="button" href="{% url 'goal_progress' %}">목표 실천으로 →</a>{% endif %}</section></div>
+<aside class="card report-card report-analysis"><h2>AI 주간 코멘트</h2>
+{% if saved_report %}<p class="report-note">{{ saved_report.updated_at|date:'Y.m.d H:i' }} 분석 · 저장된 결과</p>
+{% if analysis_stale %}<p class="form-note" role="status">분석 이후 기록이나 계획이 바뀌었습니다. 아래 내용은 이전 기록 기준입니다.</p>{% endif %}
+<h3>잘한 점</h3><ul>{% for item in saved_report.analysis.highlights %}<li>{{ item }}</li>{% endfor %}</ul>
+<h3>보완할 점</h3><ul>{% for item in saved_report.analysis.improvements %}<li>{{ item }}</li>{% endfor %}</ul>
+<h3>다음 주 실천 제안</h3><ul>{% for item in saved_report.analysis.next_steps %}<li>{{ item }}</li>{% endfor %}</ul>
+<p class="report-note">실천 제안은 저장된 목표를 자동으로 바꾸지 않습니다.</p>
+{% else %}<p>{% if has_records %}이번 주 기록을 바탕으로 잘한 점과 다음 주 실천 방향을 정리해 드려요.{% else %}아직 분석할 기록이 없어요. 기록을 남기면 주간 분석을 받을 수 있습니다.{% endif %}</p>{% endif %}
+{% if analysis_error %}<p class="report-error" role="alert">{{ analysis_error }}</p>{% endif %}
+{% if not saved_report or analysis_stale %}<form method="post" id="weekly-report-form">{% csrf_token %}<input type="hidden" name="action" value="analyze"><p class="report-note">버튼을 누르면 이 주의 활동·체중 기록 요약과 저장된 계획을 Gemini에 보내 분석합니다. 결과는 저장되며 페이지를 다시 열어도 재호출하지 않습니다.</p><button class="button button-primary" type="submit" {% if not has_records %}disabled{% endif %}>{% if saved_report %}변경된 기록으로 분석 갱신{% else %}AI 주간 분석 받기{% endif %}</button><p id="report-loading" class="report-note" role="status" hidden>주간 기록을 분석하고 있어요. 잠시 기다려 주세요.</p></form>{% endif %}
+<p class="report-note">일부 기록에 대한 AI의 참고 의견이며 의학적 진단이나 처방이 아닙니다.</p>
+</aside></div>
+<script>
+(() => {
+    const form = document.getElementById('weekly-report-form');
+    if (!form) return;
+    form.addEventListener('submit', event => {
+        const button = form.querySelector('button');
+        if (button.disabled) { event.preventDefault(); return; }
+        button.disabled = true;
+        document.getElementById('report-loading').hidden = false;
+    });
+    window.addEventListener('pageshow', () => {
+        {% if has_records %}form.querySelector('button').disabled = false;{% endif %}
+        document.getElementById('report-loading').hidden = true;
+    });
+})();
+</script>
+{% endblock %}
