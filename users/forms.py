@@ -15,6 +15,9 @@ class AccountLoginForm(AuthenticationForm):
 
 
 class CustomSignupForm(UserCreationForm):
+    profile_color = forms.ChoiceField(label='나만의 프로필 색상', choices=UserProfile.PROFILE_COLORS,
+                                     required=False, initial='sky', help_text='선택한 색상이 상단 프로필 원에 적용됩니다. 나중에 내 정보에서 바꿀 수 있습니다.')
+
     email = forms.EmailField(label='복구 이메일', max_length=254, help_text='아이디 찾기와 비밀번호 재설정에 사용합니다.',
                              widget=forms.EmailInput(attrs={'autocomplete': 'email'}))
     real_name = forms.CharField(label='실명', max_length=50, required=True)
@@ -37,6 +40,7 @@ class CustomSignupForm(UserCreationForm):
                 user=user,
                 real_name=self.cleaned_data['real_name'],
                 nickname=self.cleaned_data['nickname'],
+                profile_color=self.cleaned_data.get('profile_color') or 'sky',
                 start_weight=current_weight,
                 current_weight=current_weight,
                 target_weight=self.cleaned_data.get('target_weight'),

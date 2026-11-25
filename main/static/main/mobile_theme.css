@@ -195,7 +195,7 @@
     .stitch-app .header h1 { white-space: nowrap; }
     .stitch-app.page-home .header-wrapper { display: block; }
     .stitch-app .stitch-account { font-size: 0; flex: 0 0 34px; }
-    .stitch-app .stitch-account::before { content: '내'; font-size: 12px; font-weight: 700; }
+    .stitch-app .stitch-account::before { content: none; }
     .stitch-app .mobile-duration { display: flex !important; gap: 12px; }
     .mobile-duration strong { font-size: 14px; text-align: right; }
     .stitch-app.page-home .today-plan-meals { border: 0; }

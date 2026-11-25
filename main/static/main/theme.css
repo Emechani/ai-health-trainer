@@ -1,0 +1,61 @@
+/* 공통 브랜드와 사용자 기기의 화면 모드 */
+:root { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+.stitch-app .stitch-wordmark { display: flex; align-items: center; padding: 0; gap: 14px; font-weight: 600; letter-spacing: .07em; }
+.stitch-app .stitch-wordmark::before, .stitch-app .stitch-wordmark::after { content: none !important; }
+.brand-mark { display: none; }
+.brand-name { white-space: nowrap; }
+.theme-toggle { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 40px; min-height: 40px; border: 1px solid #dfe5eb; border-radius: 10px; background: #fff; color: #1d2b3e; font: inherit; font-size: 20px; cursor: pointer; }
+.auth-page .field select { width: 100%; min-height: 48px; padding: 12px 14px; background: #f7f9fb; color: #29343b; border: 1px solid #dae3e8; border-radius: 12px; font: inherit; }
+.profile-color-preview { display: block; width: 34px; height: 34px; border-radius: 50%; border: 1px solid #8795aa; margin-top: 8px; }
+@media(max-width:760px) {
+    .stitch-app .stitch-topbar { gap: 6px; padding: 10px 12px; flex-wrap: nowrap; }
+    .stitch-app .stitch-wordmark { gap: 8px; font-size: 10px; letter-spacing: .04em !important; }
+    .stitch-app .brand-mark { display: grid; place-items: center; width: 32px; height: 36px; flex: 0 0 32px; border-radius: 8px; background: #1d2b3e; color: #fff; font-size: 13px; font-weight: 800; letter-spacing: -.04em; }
+    .stitch-app .brand-name { border-left: 1px solid #dfe5eb; padding: 10px 0 10px 8px; }
+    .stitch-app .stitch-header-actions { gap: 5px; }
+    .stitch-app .stitch-account { width: 34px; min-width: 34px; height: 34px; font-size: 0; }
+    .stitch-app .stitch-account::before { content: none; }
+    .stitch-app .header-logout button { font-size: 10px; padding: 8px 0; }
+}
+/* 밝은 고정 배경을 쓰던 카드·입력창도 함께 전환합니다. 프로필 색상은 유지합니다. */
+html[data-theme="dark"] body { background: #101722 !important; color: #e6edf7; }
+html[data-theme="dark"] body.stitch-app { --canvas: #101722; --paper: #1a2534; --ink: #e6edf7; --muted: #a8b7ca; --line: #344255; --green: #7fe0b8; --green-soft: #193b34; --blue: #9ec6ff; }
+html[data-theme="dark"] .stitch-app :is(.stitch-topbar,.sidebar,.mobile-nav,.right-panel,.chat-section,.profile-panel,.card,.activity-card,.stat-card,.dark-card,.cal-inner-box,.mobile-fold) { background: #1a2534 !important; color: #e6edf7; border-color: #344255; }
+html[data-theme="dark"] .stitch-app :is(h1,h2,h3,h4,h5,h6,.value,.weight-row dd,.stitch-account:not([class*="badge-color-"]),.stitch-breadcrumb strong) { color: #e6edf7 !important; }
+html[data-theme="dark"] .stitch-app :is(.help-text,.notice-caption,.subtitle,.label,.steps-detail,.panel-note,.account-name,.section-heading p,.header p,.dark-card p) { color: #a8b7ca !important; }
+html[data-theme="dark"] .stitch-app :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { background: #222f43 !important; color: #e6edf7 !important; border-color: #465775 !important; }
+html[data-theme="dark"] .stitch-app input::placeholder, html[data-theme="dark"] .stitch-app textarea::placeholder { color: #a3b2c6; }
+html[data-theme="dark"] .stitch-app :is(.mobile-action,.button,.btn-profile,.notice-link,.btn-add,.chat-history-controls button,.cal-header a) { background: #27374d; color: #e6edf7; border-color: #465775; }
+html[data-theme="dark"] .stitch-app :is(.button-primary,.btn-ai,.btn-submit,.chat-input-area button,.mobile-coach-link,.chat-user) { background: #244f46 !important; color: #fff !important; border-color: #3a7466; }
+html[data-theme="dark"] .stitch-app :is(.chat-ai,.record-list li,.weight-summary,.form-note,.notice,.today-plan-meals > div,.goal-today .goal-grid > div,.goal-today > p:not(.help-text),.today-plan-card > p:first-of-type,.mobile-day-agenda li,.mobile-photo-preview) { background: #222f43 !important; color: #e6edf7 !important; border-color: #465775; }
+html[data-theme="dark"] .stitch-app .chat-box { background: transparent; }
+html[data-theme="dark"] .stitch-app :is(.chat-markdown blockquote,.chat-markdown code,.chat-markdown pre) { background: #293b53; color: #d8e8fa; }
+html[data-theme="dark"] .stitch-app :is(.record-reminder,.mobile-profile-logout .button) { background: #3c2833 !important; color: #ffd4df !important; }
+html[data-theme="dark"] .stitch-app :is(.record-reminder p strong,.record-list li strong,.dark-card p strong) { color: #e6edf7 !important; }
+html[data-theme="dark"] .stitch-app :is(.calendar-table th,.calendar-table td) { background: #1a2534 !important; border-color: #344255; color: #d8e8fa; }
+html[data-theme="dark"] .stitch-app .calendar-table .day-number { color: #d8e8fa !important; }
+html[data-theme="dark"] .stitch-app :is(.day-col,.day-col.today,.mobile-duration) { background: #21394a; color: #b1f1d7; border-color: #507968; }
+html[data-theme="dark"] .stitch-app :is(.mobile-day-button,.day-name,.no-record) { color: #c3cfdf; }
+html[data-theme="dark"] .stitch-app .mobile-day-button[aria-pressed=true] { background: #355f53; color: #fff; }
+html[data-theme="dark"] .stitch-app .mobile-nav :is(a,button) { color: #b7c5d7; }
+html[data-theme="dark"] .stitch-app .mobile-nav :is([aria-current=page],.is-active) { color: #8ce6c2; }
+html[data-theme="dark"] .stitch-app .mobile-nav :is([aria-current=page],.is-active) svg { background: #244f46; }
+html[data-theme="dark"] .stitch-app .sidebar :is(.logo,a.active), html[data-theme="dark"] .stitch-app .brand-mark { background: #dce7f4; color: #152338; }
+html[data-theme="dark"] .stitch-app .brand-name { border-color: #465775; }
+html[data-theme="dark"] :is(.theme-toggle,#mobile-record-sheet) { background: #1a2534; color: #e6edf7; border-color: #465775; }
+html[data-theme="dark"] .stitch-app .stitch-header-actions .header-logout button { color: #d8e8fa; }
+html[data-theme="dark"] #mobile-record-sheet .mobile-action { background: #27374d; color: #e6edf7; }
+html[data-theme="dark"] #mobile-record-sheet .mobile-action small { color: #b7c5d7; }
+html[data-theme="dark"] .stitch-app .chat-input-area { background: #101722 !important; }
+html[data-theme="dark"] .auth-page :is(.auth-shell,.auth-content) { background: #1a2534; color: #e6edf7; }
+html[data-theme="dark"] .auth-page .auth-intro { background: #142c32; }
+html[data-theme="dark"] .auth-page :is(h1,h2,label,a) { color: #e6edf7; }
+html[data-theme="dark"] .auth-page :is(.subtitle,.help,.account-footer) { color: #a8b7ca; border-color: #344255; }
+html[data-theme="dark"] .auth-page .field :is(input,select) { background: #222f43; color: #e6edf7; border-color: #465775; }
+html[data-theme="dark"] .auth-page .notice { background: #21394a; color: #d8e8fa; }
+html[data-theme="dark"] .auth-page .primary { background: #28604f; color: #fff; }
+html[data-theme="dark"] .errorlist { color: #ffb9c6; }
+html[data-theme="dark"] .stitch-app .weight-chart text { fill: #c3cfdf; }
+
+.stitch-app .theme-settings-toggle { width: auto; min-height: 44px; padding: 10px 16px; font-size: 13px; font-weight: 700; }
