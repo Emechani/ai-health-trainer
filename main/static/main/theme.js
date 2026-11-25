@@ -1,24 +1,22 @@
 (() => {
     const key = 'health-overview-theme';
     const preference = matchMedia('(prefers-color-scheme: dark)');
-    let selected = null;
-    try { const saved = localStorage.getItem(key); if (saved === 'dark' || saved === 'light') selected = saved; } catch (_) {}
-    function apply(theme) {
+    let selected = 'system';
+    try { const saved = localStorage.getItem(key); if (['dark', 'light', 'system'].includes(saved)) selected = saved; } catch (_) {}
+    function apply() {
+        const theme = selected === 'system' ? (preference.matches ? 'dark' : 'light') : selected;
         document.documentElement.dataset.theme = theme;
-        document.querySelectorAll('[data-theme-toggle]').forEach(button => {
-            button.textContent = theme === 'dark' ? '라이트 모드 켜기' : '다크 모드 켜기';
-            button.setAttribute('aria-label', theme === 'dark' ? '라이트 모드 켜기' : '다크 모드 켜기');
-            button.setAttribute('aria-pressed', String(theme === 'dark'));
-        });
+        document.querySelectorAll('[data-theme-select]').forEach(select => { select.value = selected; });
     }
-    apply(selected || (preference.matches ? 'dark' : 'light'));
-    preference.addEventListener('change', () => { if (!selected) apply(preference.matches ? 'dark' : 'light'); });
+    apply();
+    preference.addEventListener('change', () => { if (selected === 'system') apply(); });
     document.addEventListener('DOMContentLoaded', () => {
-        apply(document.documentElement.dataset.theme);
-        document.querySelectorAll('[data-theme-toggle]').forEach(button => button.addEventListener('click', () => {
-            selected = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        apply();
+        document.querySelectorAll('[data-theme-select]').forEach(select => select.addEventListener('change', () => {
+            if (!['light', 'dark', 'system'].includes(select.value)) return;
+            selected = select.value;
             try { localStorage.setItem(key, selected); } catch (_) {}
-            apply(selected);
+            apply();
         }));
         // 고정된 선택 목록의 색상만 미리 보기에 사용합니다.
         const colors = {sky:'#eaf0fb',mint:'#d5f7ed',green:'#cde9c9',lavender:'#e8def9',pink:'#fbdce7',peach:'#ffe3c9',navy:'#1d2b3e'};
