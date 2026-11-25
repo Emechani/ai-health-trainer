@@ -637,6 +637,10 @@ def ai_chat_api(request):
             profile_text = '프로필 미설정. 시작 체중, 현재 체중, 목표 체중을 알 수 없습니다.'
 
         exercise_habits_text = profile.exercise_habits_summary if profile else '운동 습관 프로필 미설정'
+        from .plan_revision import active_plan
+        stored_week_plan = active_plan(request.user, profile, today)
+        stored_plan_text = json.dumps(stored_week_plan.meal_snapshot, ensure_ascii=False) if stored_week_plan else '현재 목표 체중에 맞는 이번 주 계획 없음'
+
 
         # 최근 7일의 실제 사용자 기록만 사용합니다.
         context_text = recent_record_context(request.user, today)
@@ -662,6 +666,7 @@ def ai_chat_api(request):
 8. 운동 습관의 '미설정'은 경험·가능 시간·선호를 사용자가 아직 입력하지 않았다는 뜻이며, 실제 운동·걸음 수 기록이 없거나 연동이 실패했다는 뜻이 아닙니다. 아래 실제 기록을 먼저 확인하고 날짜·종목·시간·걸음 수를 근거로 추천하세요. 이전 AI 답변이 기록이 없다고 해도 최신 기록이 우선입니다.
 9. Google Health 걸음 수는 일상 활동량입니다. 이를 특정 운동 종목의 경험, 운동 강도, 운동 가능한 시간으로 단정하지 마세요. 수동 운동의 걸음 수와 Health 걸음 수는 중복 가능성이 있어 합산하지 않습니다. 필요한 미입력 정보만 추가로 질문하세요.
 10. 대화로 알려준 선호·경험은 상담에 참고할 수 있지만, 프로필을 자동 저장했다고 말하지 마세요. 이 대화 기능은 프로필을 변경하지 않습니다.
+11. 아래 저장된 주간 계획을 참고하세요. 일반 상담은 계획을 변경하지 않습니다. 변경 요청에는 대화 방식을 ‘이번 주 계획 수정’으로 선택하고 수정안의 ‘계획에 적용’을 누르도록 안내하세요.
 
 [현재 사용자 프로필 — 과거 대화보다 우선하는 최신 목표]
 {profile_text}
@@ -671,6 +676,9 @@ def ai_chat_api(request):
 
 [사용자의 최근 7일간 기록]
 {context_text}
+
+[현재 저장된 이번 주 계획 — 상담만으로 변경되지 않음]
+{stored_plan_text}
 
 [오늘의 이전 대화]
 {conversation_text}

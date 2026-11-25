@@ -809,6 +809,18 @@
 
             </div>
 
+            <div class="plan-revision-controls">
+                <label for="chat-request-mode">대화 방식</label>
+                <select id="chat-request-mode"><option value="chat">일반 상담</option><option value="revise">이번 주 계획 수정</option></select>
+                <p>수정 요청 예: “오늘부터 걷기를 10분으로 줄여줘.” 수정안을 확인하고 적용해야 계획이 바뀝니다. 목표 체중·운동 가능 시간은 프로필에서 수정해 주세요.</p>
+            </div>
+            <section id="plan-revision-preview" class="plan-revision-preview" hidden aria-labelledby="plan-revision-title">
+                <h4 id="plan-revision-title">주간 계획 수정안 · 아직 미적용</h4>
+                <p id="plan-revision-summary"></p><div id="plan-revision-changes"></div>
+                <p>지난 날짜와 실제 기록은 유지됩니다. 수정안은 15분 동안 유효합니다.</p>
+                <div class="plan-revision-actions"><button type="button" id="plan-revision-apply">계획에 적용</button><button type="button" id="plan-revision-dismiss">취소</button></div>
+            </section>
+            <p id="plan-revision-status" role="status"></p>
             <div class="chat-input-area">
                 <input
                     type="text"
@@ -912,6 +924,10 @@
             document.getElementById('chat-date').disabled = chatBusy || historyBusy;
             document.getElementById('chat-today-button').disabled = chatBusy || historyBusy;
             document.getElementById('chat-input').placeholder = archive ? '이전 대화는 읽기 전용입니다.' : '질문을 입력하세요...';
+            document.getElementById('chat-request-mode').disabled = archive || chatBusy || historyBusy || planRevisionBusy;
+            for (const id of ['plan-revision-apply','plan-revision-dismiss']) {
+                document.getElementById(id).disabled = archive || chatBusy || historyBusy || planRevisionBusy;
+            }
         }
 
         function populateChatDates(dates) {
@@ -986,9 +1002,9 @@
         }
 
         async function sendMessage() {
-            if (chatBusy || historyBusy || selectedChatDate !== chatToday) return;
+            if (chatBusy || historyBusy || planRevisionBusy || selectedChatDate !== chatToday) return;
             await checkChatDay();
-            if (chatBusy || historyBusy || selectedChatDate !== chatToday) return;
+            if (chatBusy || historyBusy || planRevisionBusy || selectedChatDate !== chatToday) return;
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
             if (!message || message.length > 2000) return;
@@ -996,8 +1012,10 @@
             updateChatControls();
             appendMessage('chat-user', '나', message);
             input.value = '';
+            const revising = document.getElementById('chat-request-mode').value === 'revise';
+            if (revising) showPlanRevision(null);
             try {
-                const response = await fetch("{% url 'ai_chat_api' %}", {
+                const response = await fetch(revising ? "{% url 'plan_revision' %}" : "{% url 'ai_chat_api' %}", {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
                     body: JSON.stringify({message: message, date: selectedChatDate})
@@ -1014,8 +1032,10 @@
                     }
                 } else if (response.ok && data.status === 'success') {
                     appendMessage('chat-ai', '🤖 AI 트레이너', data.reply);
+                    if (data.proposal) showPlanRevision(data.proposal);
                 } else {
                     appendMessage('chat-ai', '안내', data.message || '답변을 가져오지 못했습니다.');
+                    if (revising) input.value = message;
                 }
             } catch (error) {
                 appendMessage('chat-ai', '안내', '서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.');
@@ -1025,6 +1045,77 @@
                 if (selectedChatDate === chatToday) input.focus();
             }
         }
+
+        let pendingPlanRevision = null;
+        let planRevisionBusy = false;
+        function showPlanRevision(proposal) {
+            pendingPlanRevision = proposal;
+            const preview = document.getElementById('plan-revision-preview');
+            preview.hidden = !proposal;
+            const changes = document.getElementById('plan-revision-changes');
+            changes.replaceChildren();
+            if (!proposal) return;
+            document.getElementById('plan-revision-summary').textContent = '요청: ' + proposal.request + '\n' + proposal.summary;
+            for (const change of proposal.changes) {
+                const day = document.createElement('details');
+                const title = document.createElement('summary');
+                title.textContent = change.date + ' 변경 내용';
+                day.append(title);
+                for (const [label, value] of [['변경 전', change.before], ['변경 후', change.after]]) {
+                    const heading = document.createElement('strong');
+                    heading.textContent = label;
+                    const exercise = document.createElement('p');
+                    exercise.textContent = value.exercise_minutes ? `${value.exercise_name} ${value.exercise_minutes}분` : '휴식일';
+                    const action = document.createElement('p');
+                    action.textContent = value.action;
+                    day.append(heading, exercise, action);
+                    for (const meal of value.meals) {
+                        const item = document.createElement('p');
+                        item.textContent = `${meal.label}: ${meal.food_name} · ${meal.portion} · ${meal.calories} kcal (추정치)`;
+                        day.append(item);
+                    }
+                }
+                changes.append(day);
+            }
+            document.getElementById('plan-revision-status').textContent = '미리보기입니다. 적용 버튼을 눌러야 홈과 목표 실천에 반영됩니다.';
+        }
+        async function finishPlanRevision(action) {
+            if (!pendingPlanRevision || planRevisionBusy || chatBusy || historyBusy || selectedChatDate !== chatToday) return;
+            planRevisionBusy = true;
+            const buttons = ['plan-revision-apply','plan-revision-dismiss'].map(id => document.getElementById(id));
+            buttons.forEach(button => { button.disabled = true; });
+            const status = document.getElementById('plan-revision-status');
+            try {
+                const response = await fetch("{% url 'plan_revision' %}", {
+                    method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+                    body:JSON.stringify({action,nonce:pendingPlanRevision.nonce})
+                });
+                const data = await response.json();
+                status.textContent = data.message || '요청을 처리하지 못했습니다.';
+                if (response.ok && data.status === 'success') {
+                    showPlanRevision(null);
+                    if (action === 'apply') {
+                        appendMessage('chat-ai','🤖 AI 트레이너',data.message);
+                        const link = document.createElement('a');
+                        link.href = data.plan_url;
+                        link.textContent = '적용된 목표 실천 보기 →';
+                        status.append(document.createElement('br'), link);
+                    }
+                } else if (response.status === 409) {
+                    showPlanRevision(null);
+                }
+            } catch (_) {
+                status.textContent = '처리 결과를 확인하지 못했습니다. 페이지를 새로고침해 확인해 주세요.';
+            } finally {
+                planRevisionBusy = false;
+                updateChatControls();
+            }
+        }
+        document.getElementById('plan-revision-apply').addEventListener('click', () => finishPlanRevision('apply'));
+        document.getElementById('plan-revision-dismiss').addEventListener('click', () => finishPlanRevision('dismiss'));
+        fetch("{% url 'plan_revision' %}", {cache:'no-store'}).then(response => response.ok ? response.json() : null).then(data => {
+            if (data && data.proposal) showPlanRevision(data.proposal);
+        }).catch(() => {});
 
         // 자정 전환, 백그라운드 탭 복귀, 절전 해제 후에도 서버의 오늘 날짜를 확인합니다.
         function scheduleMidnightCheck() {

@@ -1,6 +1,7 @@
 # records/urls.py
 from django.urls import path
 from . import views
+from .plan_revision import plan_revision
 
 urlpatterns = [
     path('goal-progress/', views.goal_progress, name='goal_progress'),
@@ -14,6 +15,7 @@ urlpatterns = [
     path('calendar/', views.exercise_calendar, name='exercise_calendar'),
     path('meal/<int:pk>/edit/', views.meal_edit, name='meal_edit'),
     path('meal/<int:pk>/delete/', views.meal_delete, name='meal_delete'),
+    path('api/chat/plan-revision/', plan_revision, name='plan_revision'),
     path('api/chat/', views.ai_chat_api, name='ai_chat_api'),
     path('api/chat/history/', views.chat_history_api, name='chat_history_api'),
 ]
