@@ -71,3 +71,14 @@ html[data-theme="dark"] .stitch-app .weight-chart text { fill: #c3cfdf; }
     .profile-header-controls { align-items: stretch; }
     .appearance-control { grid-template-columns: auto minmax(0,1fr); }
 }
+
+/* 프로필 카드와 상단 원에 같은 저장 색상을 적용합니다. */
+.stitch-app .profile-panel .avatar.badge-color-white { background: #ffffff; color: #1d2b3e; border: 1px solid #8795aa; }
+.stitch-app .profile-panel .avatar.badge-color-sky { background: #eaf0fb; color: #1d2b3e; border: 1px solid #8795aa; }
+.stitch-app .profile-panel .avatar.badge-color-mint { background: #d5f7ed; color: #145c49; border: 1px solid #8795aa; }
+.stitch-app .profile-panel .avatar.badge-color-green { background: #cde9c9; color: #244f2b; border: 1px solid #8795aa; }
+.stitch-app .profile-panel .avatar.badge-color-lavender { background: #e8def9; color: #563b78; border: 1px solid #8795aa; }
+.stitch-app .profile-panel .avatar.badge-color-pink { background: #fbdce7; color: #813751; border: 1px solid #8795aa; }
+.stitch-app .profile-panel .avatar.badge-color-peach { background: #ffe3c9; color: #784322; border: 1px solid #8795aa; }
+.stitch-app .profile-panel .avatar.badge-color-navy { background: #1d2b3e; color: #ffffff; border: 1px solid #8795aa; }
+@media(max-width:760px) { .stitch-app .stitch-account.badge-color-white { background: #fff; color: #1d2b3e; border: 1px solid #dfe5eb; } }

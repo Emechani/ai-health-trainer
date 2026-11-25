@@ -5,7 +5,7 @@
         <strong>{% if request.resolver_match.url_name == 'home' %}홈{% elif request.resolver_match.url_name == 'exercise_calendar' %}달력 · AI 트레이너{% elif request.resolver_match.url_name == 'goal_progress' %}목표 실천{% elif request.resolver_match.url_name == 'today_record' %}운동 기록{% elif request.resolver_match.url_name == 'meal_record' %}식사 기록{% elif request.resolver_match.url_name == 'meal_plan_history' or request.resolver_match.url_name == 'saved_meal_plan' %}식단 보관함{% else %}프로필 설정{% endif %}</strong>
     </div>
     <div class="stitch-header-actions">
-        <a href="{% url 'profile_update' %}" aria-label="내 정보: {{ request.user.userprofile.nickname|default:request.user.username }}" class="stitch-account badge-color-{{ request.user.userprofile.badge_color_key|default:'sky' }}">{{ request.user.userprofile.nickname|default:request.user.username }} 님</a>
+        <a href="{% url 'profile_update' %}" aria-label="내 정보: {{ request.user.userprofile.nickname|default:request.user.username }}" class="stitch-account badge-color-{{ request.user.userprofile.badge_color_key|default:'white' }}">{{ request.user.userprofile.nickname|default:request.user.username }} 님</a>
         <form class="header-logout" method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">로그아웃</button></form>
     </div>
 </header>

@@ -10,14 +10,15 @@ from django.contrib.auth.models import User # 장고의 기본 로그인 계정 
 
 class UserProfile(models.Model):
     PROFILE_COLORS = [
+        ('white', '기본 (흰색)'),
         ('sky', '하늘색'), ('mint', '민트색'), ('green', '초록색'),
         ('lavender', '보라색'), ('pink', '분홍색'), ('peach', '살구색'), ('navy', '남색'),
     ]
-    profile_color = models.CharField('프로필 원 색상', max_length=12, choices=PROFILE_COLORS, default='sky')
+    profile_color = models.CharField('프로필 원 색상', max_length=12, choices=PROFILE_COLORS, default='white')
 
     @property
     def badge_color_key(self):
-        return self.profile_color if self.profile_color in dict(self.PROFILE_COLORS) else 'sky'
+        return self.profile_color if self.profile_color in dict(self.PROFILE_COLORS) else 'white'
 
     # 1. 특정 로그인 계정과 이 프로필 정보를 1:1로 강력하게 연결합니다.
     user = models.OneToOneField(User, on_delete=models.CASCADE)
