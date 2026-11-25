@@ -200,3 +200,18 @@
     .mobile-duration strong { font-size: 14px; text-align: right; }
     .stitch-app.page-home .today-plan-meals { border: 0; }
 }
+
+@media (max-width: 760px) {
+    .stitch-app .stitch-header-actions { gap: 8px; }
+    .stitch-app .stitch-header-actions .header-logout { display: block; }
+    .stitch-app .header-logout button { min-height: 44px; padding: 8px 4px; font-size: 11px; color: #425466; white-space: nowrap; }
+    .stitch-app .stitch-account.badge-color-sky { background: #eaf0fb; color: #1d2b3e; }
+    .stitch-app .stitch-account.badge-color-mint { background: #d5f7ed; color: #145c49; }
+    .stitch-app .stitch-account.badge-color-green { background: #cde9c9; color: #244f2b; }
+    .stitch-app .stitch-account.badge-color-lavender { background: #e8def9; color: #563b78; }
+    .stitch-app .stitch-account.badge-color-pink { background: #fbdce7; color: #813751; }
+    .stitch-app .stitch-account.badge-color-peach { background: #ffe3c9; color: #784322; }
+    .stitch-app .stitch-account.badge-color-navy { background: #1d2b3e; color: #fff; }
+    .mobile-profile-logout { margin: 20px 0; }
+    .stitch-app .mobile-profile-logout .button { width: 100%; background: #fff0f2; color: #913445; border: 0; }
+}

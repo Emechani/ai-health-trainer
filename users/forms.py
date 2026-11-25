@@ -76,6 +76,12 @@ class UserProfileForm(forms.ModelForm):
 
 
 class ProfileUpdateForm(UserProfileForm):
+    profile_color = forms.ChoiceField(label='프로필 원 색상', choices=UserProfile.PROFILE_COLORS, required=False,
+                                     help_text="오른쪽 위 '내' 원에 적용됩니다. 선택 후 변경사항을 저장해 주세요.")
+
+    def clean_profile_color(self):
+        return self.cleaned_data.get('profile_color') or self.instance.badge_color_key
+
     recovery_email = forms.EmailField(label='복구 이메일', max_length=254, required=False,
                                      help_text='기존 계정도 이메일을 등록하면 아이디·비밀번호를 찾을 수 있습니다.')
     email_password = forms.CharField(label='이메일 변경 확인용 현재 비밀번호', required=False,
@@ -103,7 +109,7 @@ class ProfileUpdateForm(UserProfileForm):
         return profile
 
     class Meta(UserProfileForm.Meta):
-        fields = ['nickname', 'start_weight', 'current_weight', 'target_weight']
+        fields = ['nickname', 'profile_color', 'start_weight', 'current_weight', 'target_weight']
         labels = {**UserProfileForm.Meta.labels, 'nickname': '닉네임'}
 
 
