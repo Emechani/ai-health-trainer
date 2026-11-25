@@ -861,7 +861,12 @@
                 const count = button.closest('td').querySelectorAll('.day-record-tags .tag').length;
                 button.querySelector('small').textContent = count ? `${count}건` : '—';
                 button.setAttribute('aria-label', button.getAttribute('aria-label') + `, ${count}건`);
-                button.addEventListener('click', () => showDay(button));
+                button.addEventListener('click', () => {
+                    showDay(button);
+                    if (matchMedia('(max-width: 760px)').matches) {
+                        document.getElementById('mobile-day-agenda').scrollIntoView({block: 'start'});
+                    }
+                });
             });
             const initial = calendar.querySelector('.today-cell .mobile-day-button') || buttons.find(button => button.closest('td').querySelector('.tag')) || buttons[0];
             if (initial) { showDay(initial); calendar.classList.add('calendar-mobile-ready'); }
@@ -1030,6 +1035,11 @@
         window.addEventListener('load', function () {
             const chatBox = document.getElementById('chat-box');
             chatBox.scrollTop = chatBox.scrollHeight;
+            const todayCell = document.querySelector('.today-cell');
+            const chatOnly = new URL(location.href).searchParams.get('chat') === '1';
+            if (todayCell && !chatOnly && !location.hash) {
+                todayCell.scrollIntoView({block: 'center', inline: 'nearest'});
+            }
             updateChatControls();
             checkChatDay();
             scheduleMidnightCheck();
