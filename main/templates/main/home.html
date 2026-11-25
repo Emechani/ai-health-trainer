@@ -1105,7 +1105,7 @@
                 <div class="progress-container">
                     <div class="progress-bar" role="progressbar" aria-label="목표 체중 달성률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progress_percentage }}">
                         <div class="progress-fill"
-                             style="width: {{ progress_percentage }}%;">
+                             data-progress="{{ progress_percentage }}">
                         </div>
                     </div>
 
@@ -1192,6 +1192,14 @@
         scheduleHomeMidnightCheck();
         setInterval(checkHomeDay, 60000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) checkHomeDay(); });
+    </script>
+    <script>
+        document.querySelectorAll('.progress-fill[data-progress]').forEach(fill => {
+            const percentage = Number(fill.dataset.progress.replace(',', '.'));
+            if (Number.isFinite(percentage)) {
+                fill.style.width = Math.max(0, Math.min(100, percentage)) + '%';
+            }
+        });
     </script>
 </body>
 </html>
