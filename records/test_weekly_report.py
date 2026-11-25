@@ -6,7 +6,8 @@ from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db import DatabaseError
-from django.test import Client, TestCase, override_settings
+from django.test import Client, RequestFactory, TestCase, override_settings
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from ai_engine.client import AIError
@@ -232,3 +233,82 @@ class WeeklyReportTests(TestCase):
             with self.assertRaises(ValueError):
                 validated_analysis(text)
         self.assertEqual(validated_analysis(json.dumps(self.analysis)), self.analysis)
+
+    def test_pdf_is_downloadable_embeds_korean_font_and_never_calls_ai(self):
+        response = self.client.get(reverse('weekly_report_pdf'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment;', response['Content-Disposition'])
+        self.assertIn('2026-11-23.pdf', response['Content-Disposition'])
+        self.assertIn('no-store', response['Cache-Control'])
+        self.assertTrue(response.content.startswith(b'%PDF-'))
+        self.assertIn(b'/FontFile2', response.content)
+        self.ai.assert_not_called()
+
+    def test_pdf_access_methods_and_invalid_week(self):
+        url = reverse('weekly_report_pdf')
+        self.assertEqual(Client().get(url).status_code, 302)
+        self.assertEqual(self.client.post(url).status_code, 405)
+        for week in ('bad-date', '2026-11-30', '9999-12-31', '0001-01-01'):
+            self.assertEqual(self.client.get(url, {'week': week}).status_code, 400)
+        self.ai.assert_not_called()
+
+    def test_pdf_uses_selected_week_and_current_users_records_only(self):
+        WeeklyReport.objects.create(user=self.other, start_date=self.start, source_hash='other',
+            model_name='mock', analysis={'highlights': ['PRIVATE_ANALYSIS']})
+        GoogleHealthStepRecord.objects.create(user=self.other, date=self.today, steps=999999)
+        with patch('records.report_pdf.report_pdf', return_value=b'%PDF-mock') as renderer:
+            response = self.client.get(reverse('weekly_report_pdf'))
+        self.assertEqual(response.status_code, 200)
+        data, start, end, saved, name = renderer.call_args.args
+        self.assertEqual(data['totals']['steps'], 3000)
+        self.assertEqual(start, self.start)
+        self.assertIsNone(saved)
+        self.assertEqual(name, self.owner.username)
+        with patch('records.report_pdf.report_pdf', return_value=b'%PDF-mock') as renderer:
+            self.client.get(reverse('weekly_report_pdf'), {'week': '2026-11-18'})
+        self.assertEqual(renderer.call_args.args[1], date(2026, 11, 16))
+        self.assertEqual(renderer.call_args.args[0]['totals']['steps'], 0)
+        self.ai.assert_not_called()
+
+    def test_pdf_stale_analysis_is_exported_without_regeneration(self):
+        self.post()
+        Exercise.objects.filter(pk=self.exercise.pk).update(steps=4000)
+        with patch('records.report_pdf.report_pdf', return_value=b'%PDF-mock') as renderer:
+            self.client.get(reverse('weekly_report_pdf'))
+        data, _, _, saved, _ = renderer.call_args.args
+        self.assertNotEqual(data['fingerprint'], saved.source_hash)
+        self.assertEqual(saved.analysis, self.analysis)
+        self.ai.assert_called_once()
+
+    def test_pdf_long_korean_analysis_and_user_markup_can_span_pages(self):
+        self.plan()
+        long_analysis = {key: ['한글 분석 내용과 작은 실천을 계속 기록합니다. ' * 18] * 2 for key in self.analysis}
+        WeeklyReport.objects.create(user=self.owner, start_date=self.start, source_hash='old',
+            model_name='mock', analysis=long_analysis)
+        self.profile.nickname = '<b>한글 사용자</b> & 검증'
+        self.profile.save()
+        response = self.client.get(reverse('weekly_report_pdf'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.content.startswith(b'%PDF-'))
+        import re
+        self.assertGreaterEqual(len(re.findall(rb'/Type\s*/Page\b', response.content)), 3)
+        self.ai.assert_not_called()
+
+    def test_pdf_empty_week_is_valid_and_failures_do_not_expose_details(self):
+        self.record.delete()
+        self.assertEqual(self.client.get(reverse('weekly_report_pdf')).status_code, 200)
+        with patch('records.report_pdf.report_pdf', side_effect=RuntimeError('PRIVATE_PATH')):
+            response = self.client.get(reverse('weekly_report_pdf'))
+        self.assertContains(response, 'PDF를 만들지 못했습니다.', status_code=503)
+        self.assertNotContains(response, 'PRIVATE_PATH', status_code=503)
+        self.ai.assert_not_called()
+
+    def test_home_report_link_is_inside_title_header_once(self):
+        request = RequestFactory().get('/')
+        request.user = self.owner
+        html = render_to_string('main/home.html', {'today': self.today}, request=request)
+        header_start = html.index('<div class="header-wrapper">')
+        auth_start = html.index('<div class="auth-buttons">', header_start)
+        self.assertIn('home-weekly-report', html[header_start:auth_start])
+        self.assertEqual(html.count('class="button home-weekly-report"'), 1)

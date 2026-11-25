@@ -7,12 +7,12 @@ import google.generativeai as genai
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import transaction
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 from zoneinfo import ZoneInfo
 
 from ai_engine.client import AIError, generate, model_for
@@ -94,6 +94,39 @@ def validated_analysis(text):
     return result
 
 
+def selected_week(raw, today):
+    selected = date.fromisoformat(raw)
+    start = selected - timedelta(days=selected.weekday())
+    this_week = today - timedelta(days=today.weekday())
+    if start > this_week or start.year < 2000:
+        raise ValueError('Invalid week')
+    return start
+
+
+@login_required
+@never_cache
+@require_GET
+def weekly_report_pdf(request):
+    today = timezone.localdate(timezone=ZoneInfo('Asia/Seoul'))
+    try:
+        start = selected_week(request.GET.get('week', today.isoformat()), today)
+    except (ValueError, TypeError, OverflowError):
+        return HttpResponseBadRequest('조회할 주의 날짜를 확인해 주세요.')
+    data = report_data(request.user, start, today)
+    saved = WeeklyReport.objects.filter(user=request.user, start_date=start).first()
+    profile = UserProfile.objects.filter(user=request.user).first()
+    name = profile.nickname if profile and profile.nickname else request.user.username
+    try:
+        from .report_pdf import report_pdf
+        content = report_pdf(data, start, start + timedelta(days=6), saved, name)
+    except Exception:
+        return HttpResponse('PDF를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.', status=503, content_type='text/plain; charset=utf-8')
+    response = HttpResponse(content, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="health-overview-weekly-{start.isoformat()}.pdf"'
+    response['Cache-Control'] = 'private, no-store'
+    return response
+
+
 @login_required
 @never_cache
 @require_http_methods(['GET', 'POST'])
@@ -101,10 +134,7 @@ def weekly_report(request):
     today = timezone.localdate(timezone=ZoneInfo('Asia/Seoul'))
     this_week = today - timedelta(days=today.weekday())
     try:
-        selected = date.fromisoformat(request.GET.get('week', this_week.isoformat()))
-        start = selected - timedelta(days=selected.weekday())
-        if start > this_week or start.year < 2000:
-            raise ValueError
+        start = selected_week(request.GET.get('week', this_week.isoformat()), today)
         previous = start - timedelta(days=7)
     except (ValueError, TypeError, OverflowError):
         return HttpResponseBadRequest('조회할 주의 날짜를 확인해 주세요.')

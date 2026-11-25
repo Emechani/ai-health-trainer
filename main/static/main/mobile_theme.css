@@ -215,3 +215,8 @@
     .mobile-profile-logout { margin: 20px 0; }
     .stitch-app .mobile-profile-logout .button { width: 100%; background: #fff0f2; color: #913445; border: 0; }
 }
+
+@media (max-width: 760px) {
+    .stitch-app.page-home .header-wrapper { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; }
+    .stitch-app.page-home .home-weekly-report { max-width: 142px; margin: 0; white-space: normal; text-align: center; font-size: 11px; }
+}

@@ -2,10 +2,11 @@
 from django.urls import path
 from . import views
 from .plan_revision import plan_revision
-from .weekly_report import weekly_report
+from .weekly_report import weekly_report, weekly_report_pdf
 
 urlpatterns = [
     path('weekly-report/', weekly_report, name='weekly_report'),
+    path('weekly-report/pdf/', weekly_report_pdf, name='weekly_report_pdf'),
     path('goal-progress/', views.goal_progress, name='goal_progress'),
     path('meal-plan/', views.meal_plan, name='meal_plan'),
     path('meal-plan/history/', views.meal_plan_history, name='meal_plan_history'),

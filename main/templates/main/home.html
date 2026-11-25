@@ -828,6 +828,7 @@
                     <p>{{ today|date:"Y년 m월 d일 l" }}</p>
                 </div>
 
+                <a class="button home-weekly-report" href="{% url 'weekly_report' %}">이번 주 건강 리포트 보기 →</a>
                 <div class="auth-buttons">
                     <a href="{% url 'profile_update' %}" class="btn-profile">
                         ⚙️ 프로필 설정
@@ -920,7 +921,6 @@
             </section>
 
             <!-- 주간 활동 요약 -->
-            <p><a class="button" href="{% url 'weekly_report' %}">이번 주 건강 리포트 보기 →</a></p>
             <div class="activity-card">
                 <h3>주간 활동 요약</h3>
 

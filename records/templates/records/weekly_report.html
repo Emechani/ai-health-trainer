@@ -39,6 +39,7 @@
 {% block main_content %}
 <header class="header-wrapper"><div class="header"><span class="stitch-eyebrow">WEEKLY / MY HEALTH REPORT</span><h1>주간 건강 리포트</h1><p>{{ week_start|date:'Y.m.d' }} ~ {{ week_end|date:'m.d' }} · 한국 시간 월요일~일요일</p></div><a class="button" href="{% url 'home' %}">← 홈으로</a></header>
 <nav class="report-nav" aria-label="리포트 주 선택">
+<a class="button button-primary" href="{% url 'weekly_report_pdf' %}?week={{ week_start|date:'Y-m-d' }}">PDF 다운로드</a>
 <a class="button" href="?week={{ previous_week|date:'Y-m-d' }}">← 이전 주</a>
 <a class="button" href="{% url 'weekly_report' %}">이번 주</a>
 {% if next_week %}<a class="button" href="?week={{ next_week|date:'Y-m-d' }}">다음 주 →</a>{% endif %}

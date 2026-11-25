@@ -1,4 +1,5 @@
 /* Stitch 시안의 색상·구분선·그리드를 기존 Django 화면에 적용하는 공통 테마입니다. */
+.stitch-app.page-home .home-weekly-report { margin-left: auto; white-space: nowrap; }
 body.stitch-app {
     --canvas: #f7f8fa;
     --paper: #fff;
