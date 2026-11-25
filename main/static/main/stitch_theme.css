@@ -288,3 +288,15 @@ body.stitch-app {
 
 .stitch-app .chat-section:has(.plan-revision-preview:not([hidden])) { overflow-y: auto; }
 .stitch-app .plan-revision-preview { flex-shrink: 0; }
+
+/* 대화 방식은 날짜 위에 작게 배치하고 메시지에 남은 높이를 배정합니다. */
+.stitch-app .chat-section { padding: 24px 18px; overflow-y: auto; }
+.stitch-app .chat-section h3 { margin: 0 0 12px; padding-bottom: 12px; }
+.stitch-app .plan-revision-controls { display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 4px 10px; margin: 0 0 8px; flex: 0 0 auto; }
+.stitch-app .plan-revision-controls label { margin: 0; }
+.stitch-app .plan-revision-help { grid-column: 1 / -1; font-size: 11px; }
+.stitch-app .plan-revision-help summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
+.stitch-app .plan-revision-help p { margin: 4px 0 8px; }
+.stitch-app .chat-section .chat-status { min-height: 0; margin: 4px 0 10px; font-size: 11px; line-height: 1.5; }
+.stitch-app .chat-box { min-height: min(300px, 38svh); }
+.stitch-app #plan-revision-status:empty { display: none; }

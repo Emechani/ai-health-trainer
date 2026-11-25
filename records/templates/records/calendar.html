@@ -773,7 +773,12 @@
 
             <span class="stitch-eyebrow">COACHING / 오늘의 대화</span><h3>AI 트레이너</h3>
 
-            <p>식단/운동에 대해 질문해보세요!</p>
+
+            <div class="plan-revision-controls">
+                <label for="chat-request-mode">대화 방식</label>
+                <select id="chat-request-mode"><option value="chat">일반 상담</option><option value="revise">이번 주 계획 수정</option></select>
+                <details class="plan-revision-help"><summary>계획 수정 안내</summary><p>수정 요청 예: “오늘부터 걷기를 10분으로 줄여줘.” 수정안을 확인하고 적용해야 계획이 바뀝니다. 목표 체중·운동 가능 시간은 프로필에서 수정해 주세요.</p></details>
+            </div>
 
             <div class="chat-history-controls">
                 <select id="chat-date" aria-label="대화 날짜 선택" onchange="loadChatHistory(this.value)">
@@ -782,7 +787,7 @@
                 </select>
                 <button type="button" id="chat-today-button" onclick="loadChatHistory(chatToday)">오늘 대화</button>
             </div>
-            <p id="chat-status" class="chat-status" role="status">한국 시간 기준 오늘 대화입니다. 이전 대화는 날짜를 선택해 확인하세요.</p>
+            <p id="chat-status" class="chat-status" role="status">오늘 대화 · 한국 시간 기준</p>
 
             <div class="chat-box" id="chat-box">
 
@@ -809,11 +814,6 @@
 
             </div>
 
-            <div class="plan-revision-controls">
-                <label for="chat-request-mode">대화 방식</label>
-                <select id="chat-request-mode"><option value="chat">일반 상담</option><option value="revise">이번 주 계획 수정</option></select>
-                <p>수정 요청 예: “오늘부터 걷기를 10분으로 줄여줘.” 수정안을 확인하고 적용해야 계획이 바뀝니다. 목표 체중·운동 가능 시간은 프로필에서 수정해 주세요.</p>
-            </div>
             <section id="plan-revision-preview" class="plan-revision-preview" hidden aria-labelledby="plan-revision-title">
                 <h4 id="plan-revision-title">주간 계획 수정안 · 아직 미적용</h4>
                 <p id="plan-revision-summary"></p><div id="plan-revision-changes"></div>
@@ -966,8 +966,8 @@
                     appendMessage(item.is_ai ? 'chat-ai' : 'chat-user', item.is_ai ? '🤖 AI 트레이너' : '나', item.message);
                 }
                 status.textContent = selectedChatDate === chatToday
-                    ? '한국 시간 기준 오늘 대화입니다. 이전 대화는 날짜를 선택해 확인하세요.'
-                    : `${selectedChatDate} 대화 · 읽기 전용입니다. 질문하려면 ‘오늘 대화’로 돌아가세요.`;
+                    ? '오늘 대화 · 한국 시간 기준'
+                    : `${selectedChatDate} 대화 · 읽기 전용`;
                 return true;
             } catch (error) {
                 document.getElementById('chat-date').value = selectedChatDate;
